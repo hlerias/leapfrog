@@ -45,10 +45,8 @@ sudo apt install -y python3 python3-pip python3-venv git
 Same as the VirtualBox guide's step 8:
 
 ```bash
-git clone <repo-url> && cd leapfrog-labs && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+git clone https://github.com/hlerias/leapfrog.git && cd leapfrog && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 ```
-
-(Replace `<repo-url>` with this repository's clone URL.)
 
 ## 6. Run a model locally — no key needed
 
@@ -89,4 +87,4 @@ options:
 
 Install [VS Code](https://code.visualstudio.com/) and its **WSL** extension.
 You can then open the repo directly in Linux and edit the lab files with a full
-editor — they live under your Linux home at `~/leapfrog-labs`.
+editor — they live under your Linux home at `~/leapfrog`.

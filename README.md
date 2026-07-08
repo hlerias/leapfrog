@@ -14,8 +14,8 @@ This project — the book and these labs — was written by pairing the author's
 ## Quick start
 
 ```bash
-git clone https://github.com/<your-username>/leapfrog-labs.git
-cd leapfrog-labs
+git clone https://github.com/hlerias/leapfrog.git
+cd leapfrog
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt

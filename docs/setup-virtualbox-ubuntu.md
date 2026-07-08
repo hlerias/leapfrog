@@ -79,10 +79,8 @@ sudo apt install -y python3 python3-pip python3-venv git
 ## 8. Get the repo
 
 ```bash
-git clone <repo-url> && cd leapfrog-labs && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+git clone https://github.com/hlerias/leapfrog.git && cd leapfrog && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 ```
-
-(Replace `<repo-url>` with this repository's clone URL.)
 
 ## 9. Run a model locally — no key needed
 
