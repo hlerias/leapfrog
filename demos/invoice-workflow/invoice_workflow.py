@@ -45,8 +45,10 @@ SCHEMA = (
     '"invoice_date": string|null, "currency": string|null, '
     '"line_items": [{"description": string, "amount": number}], '
     '"subtotal": number|null, "tax": number|null, "total": number|null}. '
+    'The "vendor" is the company that ISSUED the invoice (the sender at the top), '
+    'NOT the "bill to" / customer it was sent to. '
     "Amounts must be plain numbers with no currency symbols or thousands "
-    "separators. If a field is missing or unreadable, use null."
+    "separators. If a field is missing or unreadable, use null — never guess a number."
 )
 
 
@@ -189,8 +191,10 @@ def _parse_and_check(raw):
 
 # --- 2/3. VALIDATE + RECONCILE (no model — this must be correct) ------------
 def reconcile(obj):
-    """Do the numbers add up? Returns (ok: bool, reasons: list[str])."""
-    reasons = []
+    """Do the numbers add up? Returns (ok, checks), where each check is
+    {"text": ..., "ok": bool}. The checks drive the decision AND explain it —
+    including the ones that pass, so you can see the arithmetic being verified."""
+    checks = []
     total = _num(obj.get("total"))
     subtotal = _num(obj.get("subtotal"))
     tax = _num(obj.get("tax")) or 0.0
@@ -198,19 +202,28 @@ def reconcile(obj):
              if isinstance(li, dict)]
     items = [x for x in items if x is not None]
 
-    if total is None:
-        reasons.append("no total on the invoice")
-    if not obj.get("invoice_number"):
-        reasons.append("no invoice number")
+    checks.append({"ok": bool(obj.get("invoice_number")),
+                   "text": "invoice number present"
+                           if obj.get("invoice_number") else "no invoice number"})
+    checks.append({"ok": total is not None,
+                   "text": "total present" if total is not None
+                           else "no total on the invoice"})
 
     if subtotal is not None and items:
-        if abs(sum(items) - subtotal) > TOLERANCE:
-            reasons.append(f"line items sum to {sum(items):.2f}, subtotal says {subtotal:.2f}")
+        s = sum(items)
+        good = abs(s - subtotal) <= TOLERANCE
+        checks.append({"ok": good,
+                       "text": (f"line items sum to {s:.2f} = subtotal {subtotal:.2f}" if good
+                                else f"line items sum to {s:.2f}, but subtotal says {subtotal:.2f}")})
     if total is not None and subtotal is not None:
-        if abs((subtotal + tax) - total) > TOLERANCE:
-            reasons.append(f"subtotal+tax = {subtotal + tax:.2f}, total says {total:.2f}")
+        st = subtotal + tax
+        good = abs(st - total) <= TOLERANCE
+        checks.append({"ok": good,
+                       "text": (f"subtotal {subtotal:.2f} + tax {tax:.2f} = {st:.2f} = total {total:.2f}"
+                                if good else
+                                f"subtotal {subtotal:.2f} + tax {tax:.2f} = {st:.2f}, but total says {total:.2f}")})
 
-    return (len(reasons) == 0), reasons
+    return all(c["ok"] for c in checks), checks
 
 
 def _num(v):
@@ -226,29 +239,37 @@ def _num(v):
 
 # --- 4. DECIDE (bounded policy — the model never chooses the route) ---------
 def decide(obj):
-    ok, reasons = reconcile(obj)
+    ok, checks = reconcile(obj)
     total = _num(obj.get("total"))
 
     if not ok:
         route = "hold-review"
+        why = "reconciliation failed — a human must look"
     elif total is not None and total > APPROVAL_THRESHOLD:
         route = "needs-approval"
-        reasons = [f"total {total:.2f} over {APPROVAL_THRESHOLD:.0f} threshold"]
+        why = f"reconciled, but total {total:.2f} is over the {APPROVAL_THRESHOLD:.0f} approval limit"
     else:
         route = "auto-approve"
+        why = f"reconciled, and total {total:.2f} is under the {APPROVAL_THRESHOLD:.0f} limit"
 
     # containment: nothing outside the allowlist can ever escape this function
     if route not in ROUTES:
-        route = "hold-review"
+        route, why = "hold-review", "route outside policy — contained"
 
     return {
         "vendor": obj.get("vendor"),
         "invoice_number": obj.get("invoice_number"),
+        "invoice_date": obj.get("invoice_date"),
         "currency": obj.get("currency"),
+        "subtotal": _num(obj.get("subtotal")),
+        "tax": _num(obj.get("tax")),
         "total": total,
+        "n_items": sum(1 for li in obj.get("line_items") or [] if isinstance(li, dict)),
+        "checks": checks,
         "reconciled": ok,
         "route": route,
-        "reasons": reasons,
+        "why": why,
+        "reasons": [c["text"] for c in checks if not c["ok"]],
     }
 
 
@@ -298,10 +319,62 @@ def banner():
     print(rule)
 
 
+def _fmt(v):
+    return f"{v:.2f}" if isinstance(v, (int, float)) else "—"
+
+
+STEP = "1;38;5;44"  # step-label colour (cyan, matches the brand)
+
+
+def _print_detailed(d):
+    """Narrate all four steps for one invoice, so you can see what happened."""
+    print("\n" + _c("2", "─" * 60))
+    print("  " + _c("1", "📄 " + d["invoice_file"]))
+
+    if d.get("error"):
+        print("  " + _c(STEP, "① EXTRACT  ") + _c("31", "✗ could not read the invoice — ")
+              + d["error"])
+    else:
+        print("  " + _c(STEP, "① EXTRACT  ")
+              + _c("2", "the model turned raw text into structured data:"))
+        print("             vendor: {}   invoice: {}   date: {}".format(
+            d.get("vendor") or "—", d.get("invoice_number") or "—", d.get("invoice_date") or "—"))
+        print("             {} line item(s) · subtotal {} · tax {} · total {} {}".format(
+            d.get("n_items", 0), _fmt(d.get("subtotal")), _fmt(d.get("tax")),
+            _fmt(d.get("total")), d.get("currency") or ""))
+        print("  " + _c(STEP, "② VALIDATE ") + _c("32", "✓ ")
+              + _c("2", "the reply parsed as JSON and matched the schema"))
+
+    if d.get("checks"):
+        print("  " + _c(STEP, "③ RECONCILE")
+              + _c("2", " the arithmetic — checked by code, not the model:"))
+        for c in d["checks"]:
+            mark = _c("32", "✓") if c["ok"] else _c("31", "✗")
+            print(f"             {mark} {c['text']}")
+
+    icon = ICON.get(d["route"], "?")
+    col = {"auto-approve": "32", "needs-approval": "33", "hold-review": "31"}.get(d["route"], "0")
+    print("  " + _c(STEP, "④ DECIDE   ") + _c(col, f"{icon} {d['route'].upper()}")
+          + _c("2", " — " + d.get("why", "")))
+
+
+def _print_brief(d):
+    print(f"\n{ICON.get(d['route'], '?')} {d['invoice_file']}  ->  {d['route'].upper()}")
+    print(f"   vendor={d.get('vendor')!r}  inv={d.get('invoice_number')!r}  "
+          f"total={d.get('total')} {d.get('currency') or ''}  reconciled={d.get('reconciled')}")
+    for c in d.get("checks", []):
+        if not c["ok"]:
+            print(f"   · {c['text']}")
+    if d.get("error"):
+        print(f"   · {d['error']}")
+
+
 def main():
     ap = argparse.ArgumentParser(description="Leapfrog invoice-triage demo")
     ap.add_argument("--offline", action="store_true",
                     help="use canned fixture extractions (no model, no network)")
+    ap.add_argument("--brief", action="store_true",
+                    help="terse one-block-per-invoice output instead of the explained view")
     ap.add_argument("--file", help="process a single invoice file")
     ap.add_argument("--dir", default=os.path.join(os.path.dirname(__file__), "sample_invoices"))
     args = ap.parse_args()
@@ -321,31 +394,43 @@ def main():
     print(f"  extractor: {mode}")
     print(_c("2", "─" * 60))
 
+    if not args.brief:
+        print(_c("2",
+            "\n  Accounts-Payable triage. For each invoice below, a LOCAL model reads the\n"
+            "  messy text into structured data — that is the only thing it does. Then plain\n"
+            "  code VALIDATES the JSON, RECONCILES the arithmetic, and a bounded policy\n"
+            "  DECIDES the route. The model can misread or invent a number; watch step ③\n"
+            "  catch it. The route is always chosen by code, never by the model.\n"))
+
     results = []
     for f in files:
         try:
             d = process(f, args.offline)
         except Exception as e:
             d = {"invoice_file": os.path.basename(f), "route": "hold-review",
-                 "reconciled": False, "reasons": [f"pipeline error: {e}"],
-                 "vendor": None, "invoice_number": None, "total": None, "currency": None}
+                 "reconciled": False, "checks": [], "reasons": [], "error": str(e),
+                 "why": "extraction failed — sent to a human", "vendor": None,
+                 "invoice_number": None, "invoice_date": None, "currency": None,
+                 "subtotal": None, "tax": None, "total": None, "n_items": 0}
         results.append(d)
-        print(f"\n{ICON.get(d['route'], '?')} {d['invoice_file']}  ->  {d['route'].upper()}")
-        print(f"   vendor={d['vendor']!r}  inv={d['invoice_number']!r}  "
-              f"total={d['total']} {d['currency'] or ''}  reconciled={d['reconciled']}")
-        if d["reasons"]:
-            for reason in d["reasons"]:
-                print(f"   · {reason}")
+        (_print_brief if args.brief else _print_detailed)(d)
 
     # acceptance summary: every invoice must have produced a valid, bounded route
     print("\n" + _c("2", "─" * 60))
     by = {r: sum(1 for d in results if d["route"] == r) for r in sorted(ROUTES)}
-    print("routes:", "  ".join(f"{k}={v}" for k, v in by.items()))
+    print("  routes:  " + "    ".join(f"{k}={v}" for k, v in by.items()))
     bad = [d["invoice_file"] for d in results if d["route"] not in ROUTES]
     if bad:
-        print("FAIL — invoices escaped the allowlist:", bad)
+        print("  " + _c("31", "FAIL — invoices escaped the allowlist: ") + str(bad))
         return 1
-    print(f"OK — {len(results)} invoice(s) processed, every route within policy.")
+    print("  " + _c("32", f"OK — {len(results)} invoice(s) processed, every route within policy."))
+    if not args.brief:
+        held = by.get("hold-review", 0)
+        print(_c("2",
+            "\n  Takeaway: the model never chose a route or did the maths — it only turned\n"
+            "  messy text into structure. When it (or the invoice) was wrong, reconciliation\n"
+            f"  caught it and a human gets it ({held} held here). That gap between what a\n"
+            "  model *reads* and what code *decides* is what makes this safe to ship.\n"))
     return 0
 
 

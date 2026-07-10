@@ -117,6 +117,11 @@ Expected result: `acme` **auto-approves**, `globex` **needs approval** (over the
 €1,000 threshold), and `initech` (its printed total doesn't add up) and
 `umbrella` (missing total and invoice number) are both **held for review**.
 
+By default the run **explains each step** — what the model extracted, whether the
+JSON validated, every arithmetic check (the ones that pass and the ones that
+don't), and why the policy chose the route. Add `--brief` for one terse block per
+invoice instead.
+
 ## What's here
 
 | File | What it is |

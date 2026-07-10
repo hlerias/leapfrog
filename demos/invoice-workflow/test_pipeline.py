@@ -126,6 +126,8 @@ def test_contract():
 
 
 if __name__ == "__main__":
+    iw.banner()
+    print("  " + iw._c("2", "tests · pipeline (golden) + LLM client contract (mock)\n"))
     test_golden()
     test_contract()
-    print("\nALL TESTS PASSED")
+    print("\n" + iw._c("32", "ALL TESTS PASSED"))
