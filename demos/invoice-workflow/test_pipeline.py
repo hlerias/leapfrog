@@ -48,11 +48,30 @@ GOOD = json.dumps({
                    {"description": "Delivery", "amount": 14.5}],
     "subtotal": 180.0, "tax": 41.4, "total": 221.4,
 })
-SCRIPTS = {
-    "good": [GOOD],
-    "retry": ["not json at all", GOOD],          # 1st invalid -> client retries -> ok
-    "garbage": ['{"foo": 1}', '{"foo": 2}'],      # never valid -> extract raises
-}
+
+# how real small local models actually mangle output — each of these SHOULD
+# parse to the right route on the FIRST call (no retry needed).
+STRINGY = ('{"vendor":"ACME","invoice_number":"AC-1","currency":"EUR",'
+           '"line_items":[{"description":"a","amount":"120.00"},'
+           '{"description":"b","amount":"45.50"},{"description":"c","amount":"14.50"}],'
+           '"subtotal":"180.00","tax":"41.40","total":"221.40"}')  # numbers as strings
+NULLITEMS = ('{"vendor":"ACME","invoice_number":"AC-1","currency":"EUR",'
+             '"line_items":null,"subtotal":180.0,"tax":41.4,"total":221.4}')  # null items
+SEPARATORS = ('{"vendor":"Globex","invoice_number":"G-1","currency":"EUR",'
+              '"line_items":[],"subtotal":"12,750.00","tax":"0.00","total":"12,750.00"}')
+
+ROBUSTNESS = [
+    ("clean json", GOOD, "auto-approve"),
+    ("```json fenced```", "```json\n" + GOOD + "\n```", "auto-approve"),
+    ("wrapped in prose", "Sure! Here it is:\n\n" + GOOD + "\n\nHope that helps.", "auto-approve"),
+    ("numbers as strings", STRINGY, "auto-approve"),
+    ("null line_items", NULLITEMS, "auto-approve"),
+    ("thousands separators", SEPARATORS, "needs-approval"),
+]
+
+SCRIPTS = {name: [reply] for name, reply, _ in ROBUSTNESS}
+SCRIPTS["retry"] = ["not json at all", GOOD]     # 1st invalid -> client retries -> ok
+SCRIPTS["garbage"] = ['{"foo": 1}', '{"foo": 2}']  # never invoice-shaped -> raises
 
 
 class MockModel(BaseHTTPRequestHandler):
@@ -82,11 +101,12 @@ def test_contract():
     iw.API_KEY, iw.MODEL = "test", "mock"
     raw = open(os.path.join(HERE, "sample_invoices", "acme_hardware.txt")).read()
 
-    # good: one call, valid extraction, auto-approve
-    MockModel.scenario, MockModel.calls = "good", 0
-    d = iw.decide(iw.extract_via_llm(raw))
-    assert d["route"] == "auto-approve" and MockModel.calls == 1, d
-    print("CONTRACT ok — good reply     -> parsed, auto-approve (1 call)")
+    # robustness: each messy-but-valid reply must parse on the FIRST call
+    for name, _, expected in ROBUSTNESS:
+        MockModel.scenario, MockModel.calls = name, 0
+        d = iw.decide(iw.extract_via_llm(raw))
+        assert d["route"] == expected and MockModel.calls == 1, (name, d, MockModel.calls)
+        print(f"CONTRACT ok — {name:<22}-> {expected} (1 call)")
 
     # retry: first reply invalid, client re-asks, second is valid
     MockModel.scenario, MockModel.calls = "retry", 0

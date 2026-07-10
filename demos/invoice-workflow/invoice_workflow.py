@@ -78,19 +78,42 @@ def _chat(msgs):
     return r.json()["choices"][0]["message"]["content"]
 
 
-def _parse_and_check(raw):
-    """Return (obj, None) if it parses and has the right shape, else (None, reason)."""
+def _loads(raw):
+    """Parse JSON the way real small models emit it: maybe fenced in ```json,
+    maybe wrapped in prose. Fall back to the first {...} block in the text."""
+    if not isinstance(raw, str):
+        return None
     try:
-        obj = json.loads(raw)
-    except (json.JSONDecodeError, TypeError):
-        return None, "not JSON"
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+    start, end = raw.find("{"), raw.rfind("}")
+    if start != -1 and end > start:
+        try:
+            return json.loads(raw[start:end + 1])
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
+def _parse_and_check(raw):
+    """Return (obj, None) if it parses to something invoice-shaped, else (None, reason).
+
+    Tolerant of how small local models really behave: code fences, surrounding
+    prose, null/absent line_items. Rejects JSON that isn't an invoice at all.
+    """
+    obj = _loads(raw)
     if not isinstance(obj, dict):
-        return None, "not an object"
-    for key in ("vendor", "invoice_number", "total", "line_items"):
-        if key not in obj:
-            return None, f"missing key '{key}'"
-    if not isinstance(obj.get("line_items"), list):
-        return None, "line_items is not a list"
+        return None, "not a JSON object"
+    # normalise: fill in the keys the rest of the pipeline expects
+    for key in ("vendor", "invoice_number", "invoice_date", "currency",
+                "subtotal", "tax", "total"):
+        obj.setdefault(key, None)
+    if not isinstance(obj.get("line_items"), list):  # null, missing, or wrong type
+        obj["line_items"] = []
+    # sanity: does this even look like an invoice? (guards against unrelated JSON)
+    if _num(obj["total"]) is None and _num(obj["subtotal"]) is None and not obj["line_items"]:
+        return None, "no total, subtotal, or line items — not invoice-shaped"
     return obj, None
 
 
