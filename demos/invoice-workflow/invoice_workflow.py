@@ -1,6 +1,7 @@
-# Leapfrog Labs — Invoice Workflow demo — see https://leapfrog.lerias.org — MIT licensed
+# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
 #
-# "Putting it all together": one small, real Accounts-Payable workflow.
+# Invoice Workflow demo — "putting it all together": one small, real
+# Accounts-Payable workflow.
 # A local language model does the ONE thing models are good at — reading a
 # messy human document and turning it into structure. Everything that has to
 # be *correct* — the arithmetic, the policy, the routing — is plain code the

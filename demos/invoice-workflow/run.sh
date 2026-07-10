@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Leapfrog Labs — Invoice Workflow demo — one command, everything configured.
+# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
+#
+# Invoice Workflow demo — one command, everything configured.
 # Clone the repo, run this, and it will: make a Python env, install Ollama if
 # needed, pull a small local model, and run the invoice workflow end to end.
 # No API key, no cost. Re-running is fast — each step is skipped if already done.

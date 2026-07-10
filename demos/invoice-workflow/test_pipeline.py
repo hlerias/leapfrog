@@ -1,6 +1,7 @@
-# Leapfrog Labs — Invoice Workflow tests — MIT licensed
+# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
 #
-# Two kinds of check, both runnable with no model and no network:
+# Invoice Workflow tests. Two kinds of check, both runnable with no model
+# and no network:
 #   1. GOLDEN   — the deterministic pipeline (validate -> reconcile -> decide)
 #                 produces the right route for each canned extraction.
 #   2. CONTRACT — the real LLM client path (extract_via_llm) is exercised
