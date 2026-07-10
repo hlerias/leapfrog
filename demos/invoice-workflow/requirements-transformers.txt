@@ -1,0 +1,9 @@
+# For the Hugging Face transformers backend (LLM_BACKEND=transformers).
+# Runs a small instruct model in-process on your GPU/CPU — no Ollama, no server.
+# Deliberately minimal: just torch + transformers, both plain pip installs from
+# PyPI. No accelerate / bitsandbytes / flash-attn — those often fail to build on
+# locked-down machines, and the demo doesn't need them. torch is a large
+# first-time download; on Linux the default PyPI wheel already includes CUDA.
+requests
+transformers>=4.44
+torch

@@ -52,10 +52,41 @@ if it isn't already there, pulls a small model (`llama3.2` by default), and runs
 the workflow against the four sample invoices. No API key, no cost. First run
 downloads the model; after that it's instant.
 
-**No sudo? (locked-down corporate machine)** — `run.sh` installs Ollama entirely
-in your home directory (`~/.local/bin`, models in `~/.ollama`). It never needs
-root and never touches the system. That's the whole point: this runs where the
-book says it should.
+### Locked-down corporate machine? Run it on Hugging Face instead
+
+Some corporate networks block Ollama's download and model-registry hosts (you'll
+see a 404 or `502 Bad Gateway`). Hugging Face is usually reachable in the same
+places. So there's a second backend that needs **no Ollama, no server, no sudo,
+and no admin** — it runs a small instruct model **in-process** on your GPU (or
+CPU) via Hugging Face `transformers`:
+
+```bash
+cd demos/invoice-workflow
+./run_local.sh
+```
+
+`run_local.sh` reuses `torch` + `transformers` if you already have them (e.g. from
+running the labs), otherwise installs them from PyPI into a local `.venv`. It then
+downloads a small model (`Qwen/Qwen2.5-0.5B-Instruct`, ~1 GB, cached in
+`~/.cache/huggingface`) and runs the same workflow.
+
+Deliberately conservative so it runs on a limited machine:
+- **Small model + fp16 on GPU** (fp32 on CPU) — low VRAM; works CPU-only too, just slower.
+- **Minimal deps** — only `torch` + `transformers`, both plain PyPI installs. No
+  `accelerate` / `bitsandbytes` / `flash-attn` (those often fail to build behind a firewall).
+- **Escape hatches** for restricted networks, all optional env vars:
+  - `HF_TOKEN` — if your org requires an authenticated Hugging Face account
+  - `HF_ENDPOINT` — point at an internal Hugging Face mirror
+  - `HTTPS_PROXY` — honoured automatically if your proxy needs it
+  - `HF_MODEL` — pick a different model, e.g. a bigger one for sharper extraction:
+    `HF_MODEL=Qwen/Qwen2.5-1.5B-Instruct ./run_local.sh`
+
+If the model can't be reached, the pipeline doesn't crash — every invoice simply
+falls to `hold-review`, and the error tells you which knob to try.
+
+**No sudo, Ollama route** — if your network *does* allow Ollama, `run.sh` installs
+it entirely in your home directory (`~/.local/bin`, models in `~/.ollama`). It
+never needs root either.
 
 Low on RAM? Use a smaller model:
 
@@ -91,7 +122,9 @@ Expected result: `acme` **auto-approves**, `globex` **needs approval** (over the
 | File | What it is |
 |------|------------|
 | `setup.sh` | Fresh-machine installer: system tools, then hands off to `run.sh` |
-| `run.sh` | One-command bootstrap: env + Ollama + model + run |
+| `run.sh` | One-command bootstrap (Ollama backend): env + Ollama + model + run |
+| `run_local.sh` | Corporate-proof runner (Hugging Face transformers, no Ollama/sudo) |
+| `requirements-transformers.txt` | Deps for the transformers backend (`torch` + `transformers`) |
 | `invoice_workflow.py` | The four-step pipeline, ~180 lines, commented |
 | `sample_invoices/` | Four realistic messy invoices, covering all three routes |
 | `fixtures/` | Canned correct extractions, for `--offline` and the tests |

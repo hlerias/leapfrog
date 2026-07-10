@@ -13,7 +13,12 @@
 #     4. DECIDE    a bounded policy picks a route      (containment)
 #
 # The model can be wrong; the pipeline is built to catch it and fall back to a
-# human. Run it against any OpenAI-compatible local model (Ollama by default).
+# human. Two ways to run the model, both local and free:
+#   LLM_BACKEND=ollama       (default) any OpenAI-compatible endpoint
+#   LLM_BACKEND=transformers            in-process on your GPU/CPU via Hugging
+#                                       Face — no server, no sudo, ideal for
+#                                       locked-down machines where Ollama's
+#                                       hosts are blocked but Hugging Face works
 
 import argparse
 import glob
@@ -24,9 +29,11 @@ import sys
 import requests
 
 # --- config (same env vars as every other Leapfrog lab) ---------------------
+BACKEND = os.environ.get("LLM_BACKEND", "ollama")     # "ollama" | "transformers"
 BASE_URL = os.environ.get("LLM_BASE_URL", "http://localhost:11434/v1")
 API_KEY = os.environ.get("LLM_API_KEY", "ollama")
 MODEL = os.environ.get("LLM_MODEL", "llama3.2")
+HF_MODEL = os.environ.get("HF_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")  # transformers backend
 
 APPROVAL_THRESHOLD = float(os.environ.get("APPROVAL_THRESHOLD", "1000"))  # EUR
 TOLERANCE = 0.01  # rounding slack when checking that the numbers add up
@@ -44,15 +51,22 @@ SCHEMA = (
 
 
 # --- 1. EXTRACT -------------------------------------------------------------
-def extract_via_llm(raw_text, retries=1):
-    """Ask the local model for structured JSON; validate and retry once."""
+def extract(raw_text):
+    """Dispatch to the configured backend. Both are local and free."""
+    generate = _hf_generate if BACKEND == "transformers" else _chat
+    return _extract_with(generate, raw_text)
+
+
+def _extract_with(generate, raw_text, retries=1):
+    """Shared loop: ask the model for JSON, validate, and retry once with the
+    error fed back — the same for every backend. Only `generate` differs."""
     msgs = [
         {"role": "system", "content": "You extract data from invoices. " + SCHEMA},
         {"role": "user", "content": f"INVOICE:\n{raw_text}\n\nExtract it as JSON."},
     ]
     last_err = "no response"
     for _ in range(retries + 1):
-        raw = _chat(msgs)
+        raw = generate(msgs)
         obj, err = _parse_and_check(raw)
         if obj is not None:
             return obj
@@ -61,6 +75,12 @@ def extract_via_llm(raw_text, retries=1):
     raise ValueError(f"model never returned valid JSON: {last_err}")
 
 
+# backwards-compatible alias (tests and older callers use this name)
+def extract_via_llm(raw_text):
+    return _extract_with(_chat, raw_text)
+
+
+# --- backend A: any OpenAI-compatible endpoint (Ollama, vLLM, hosted) -------
 def _chat(msgs):
     try:
         r = requests.post(
@@ -77,6 +97,55 @@ def _chat(msgs):
     except requests.exceptions.RequestException as e:
         raise ValueError(f"model request failed: {e}")
     return r.json()["choices"][0]["message"]["content"]
+
+
+# --- backend B: Hugging Face transformers, in-process on your GPU/CPU -------
+# No server, no sudo. Weights download from Hugging Face on first use and cache
+# in ~/.cache/huggingface. Ideal where Ollama's hosts are blocked but HF works.
+_HF = {}  # lazy singleton: model + tokenizer, loaded once
+
+
+def _hf_load():
+    if _HF:
+        return _HF
+    try:
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+    except ImportError:
+        raise ValueError(
+            "transformers backend needs torch + transformers. Install with:\n"
+            "  pip install -r requirements-transformers.txt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    dtype = torch.float16 if device == "cuda" else torch.float32   # fp16 halves VRAM
+    try:
+        tok = AutoTokenizer.from_pretrained(HF_MODEL)
+        try:                                            # newer transformers: dtype=
+            model = AutoModelForCausalLM.from_pretrained(HF_MODEL, dtype=dtype)
+        except TypeError:                               # older transformers: torch_dtype=
+            model = AutoModelForCausalLM.from_pretrained(HF_MODEL, torch_dtype=dtype)
+    except Exception as e:
+        raise ValueError(
+            f"could not load '{HF_MODEL}' from Hugging Face ({type(e).__name__}). "
+            "Check that huggingface.co is reachable; behind a corporate proxy you "
+            "may need HTTPS_PROXY set, an HF_TOKEN, or a mirror via HF_ENDPOINT. "
+            "A smaller model may also help: HF_MODEL=Qwen/Qwen2.5-0.5B-Instruct.")
+    model = model.to(device)
+    if tok.pad_token_id is None:
+        tok.pad_token_id = tok.eos_token_id
+    _HF.update(tok=tok, model=model, device=device)
+    return _HF
+
+
+def _hf_generate(msgs):
+    hf = _hf_load()
+    tok, model = hf["tok"], hf["model"]
+    text = tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
+    inputs = tok(text, return_tensors="pt").to(hf["device"])
+    import torch
+    with torch.no_grad():
+        out = model.generate(**inputs, max_new_tokens=512, do_sample=False,
+                             pad_token_id=tok.pad_token_id)
+    return tok.decode(out[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 
 
 def _loads(raw):
@@ -203,7 +272,7 @@ def process(path, offline):
     if offline:
         obj = extract_offline(path)
     else:
-        obj = extract_via_llm(open(path, encoding="utf-8").read())
+        obj = extract(open(path, encoding="utf-8").read())
     d = decide(obj)
     d["invoice_file"] = os.path.basename(path)
     return d
@@ -243,8 +312,12 @@ def main():
         return 2
 
     banner()
-    mode = ("OFFLINE (canned extractions, no model)" if args.offline
-            else f"LOCAL MODEL {MODEL} @ {BASE_URL}")
+    if args.offline:
+        mode = "OFFLINE (canned extractions, no model)"
+    elif BACKEND == "transformers":
+        mode = f"TRANSFORMERS (local, GPU/CPU) — {HF_MODEL}"
+    else:
+        mode = f"OLLAMA {MODEL} @ {BASE_URL}"
     print(f"  extractor: {mode}")
     print(_c("2", "─" * 60))
 
