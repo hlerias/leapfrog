@@ -211,10 +211,27 @@ def process(path, offline):
 ICON = {"auto-approve": "✓", "needs-approval": "→", "hold-review": "⚠"}
 
 
+def _c(code, s):
+    """ANSI colour, unless output is piped or NO_COLOR is set."""
+    if os.environ.get("NO_COLOR") or not sys.stdout.isatty():
+        return s
+    return f"\033[{code}m{s}\033[0m"
+
+
+def banner():
+    rule = _c("2", "─" * 60)
+    print(rule)
+    print("  " + _c("1;38;5;44", "Leapfrog Labs")
+          + _c("2", " · ") + _c("1", "Invoice Workflow"))
+    print("  " + _c("2", "The book is the why. This is where you build."))
+    print("  " + _c("38;5;99", "https://leapfrog.lerias.org"))
+    print(rule)
+
+
 def main():
     ap = argparse.ArgumentParser(description="Leapfrog invoice-triage demo")
     ap.add_argument("--offline", action="store_true",
-                    help="use the deterministic stub extractor (no model, no network)")
+                    help="use canned fixture extractions (no model, no network)")
     ap.add_argument("--file", help="process a single invoice file")
     ap.add_argument("--dir", default=os.path.join(os.path.dirname(__file__), "sample_invoices"))
     args = ap.parse_args()
@@ -224,9 +241,11 @@ def main():
         print("no invoices found", file=sys.stderr)
         return 2
 
+    banner()
     mode = ("OFFLINE (canned extractions, no model)" if args.offline
             else f"LOCAL MODEL {MODEL} @ {BASE_URL}")
-    print(f"Invoice workflow — extractor: {mode}\n" + "=" * 60)
+    print(f"  extractor: {mode}")
+    print(_c("2", "─" * 60))
 
     results = []
     for f in files:
@@ -245,7 +264,7 @@ def main():
                 print(f"   · {reason}")
 
     # acceptance summary: every invoice must have produced a valid, bounded route
-    print("\n" + "=" * 60)
+    print("\n" + _c("2", "─" * 60))
     by = {r: sum(1 for d in results if d["route"] == r) for r in sorted(ROUTES)}
     print("routes:", "  ".join(f"{k}={v}" for k, v in by.items()))
     bad = [d["invoice_file"] for d in results if d["route"] not in ROUTES]

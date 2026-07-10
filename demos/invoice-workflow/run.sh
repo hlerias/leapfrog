@@ -11,6 +11,12 @@ OLLAMA_URL="http://localhost:11434"
 
 say() { printf "\n\033[1;36m==>\033[0m %s\n" "$*"; }
 
+printf "\033[2m%s\033[0m\n" "────────────────────────────────────────────────────────────"
+printf "  \033[1;96mLeapfrog Labs\033[0m \033[2m·\033[0m \033[1mInvoice Workflow\033[0m\n"
+printf "  \033[2m%s\033[0m\n" "The book is the why. This is where you build."
+printf "  \033[2m%s\033[0m\n" "https://leapfrog.lerias.org"
+printf "\033[2m%s\033[0m\n" "────────────────────────────────────────────────────────────"
+
 # 1. Python environment (isolated, self-contained) --------------------------
 say "Setting up the Python environment"
 python3 -m venv .venv
