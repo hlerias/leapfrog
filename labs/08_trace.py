@@ -1,4 +1,18 @@
-# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
+# Leapfrog Labs · https://leapfrog.lerias.org · code MIT licensed
+# ────────────────────────────────────────────────────────────
+# Lab 08 — Trace one request                                 Ch 9
+# No API key — runs as-is with a fake call.
+#
+# WHAT IT IS    One request captured as a single span: inputs, output,
+#               tokens, latency — the seed of real observability.
+# HOW IT WORKS  1) wrap a call   2) time it, capture tokens and errors
+#               3) emit a JSON span you'd ship to your tracer
+# PROOF POINT   You get the whole request path as one record, with a real
+#               latency_ms — not just the model's name.
+# WHY DO IT     You can't debug what you can't see. When quality drops (and
+#               per Ch 8 the model usually isn't the culprit), this is what you read.
+#
+# Run:  python labs/08_trace.py
 import time, json, uuid
 
 def traced(call_fn, **inputs):

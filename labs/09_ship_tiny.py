@@ -1,4 +1,18 @@
-# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
+# Leapfrog Labs · https://leapfrog.lerias.org · code MIT licensed
+# ────────────────────────────────────────────────────────────
+# Lab 09 — Ship something tiny, end to end             Interlude
+# No API key — runs local, with an optional model call.
+#
+# WHAT IT IS    The whole book in one small shippable thing: ground a
+#               decision, structure it, and refuse to act outside its bounds.
+# HOW IT WORKS  1) ground the ticket on a real policy (embeddings)
+#               2) make a structured decision   3) contain it to an allowlist
+# PROOF POINT   It grounds on the right policy, returns a structured route,
+#               and falls back safely when the model picks a disallowed one.
+# WHY DO IT     Retrieval + structured output + containment in ~50 lines is
+#               the five percent that makes AI actually shippable.
+#
+# Run:  python labs/09_ship_tiny.py
 # pip install sentence-transformers   (model call optional; stub included)
 from sentence_transformers import SentenceTransformer
 import json

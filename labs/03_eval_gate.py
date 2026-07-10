@@ -1,4 +1,17 @@
-# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
+# Leapfrog Labs · https://leapfrog.lerias.org · code MIT licensed
+# ────────────────────────────────────────────────────────────
+# Lab 03 — A tiny eval gate                             Ch 8 & 9
+# No API key — runs as-is with a stub answerer.
+#
+# WHAT IT IS    The smallest thing that stops a bad prompt from shipping.
+# HOW IT WORKS  1) a golden set (question + must-include strings)
+#               2) score each answer   3) gate on a threshold: SHIP or BLOCKED
+# PROOF POINT   Swap the stub for your model, sabotage the prompt, re-run —
+#               the score falls under 0.90 and the gate prints BLOCKED.
+# WHY DO IT     Evals replace unit tests for non-deterministic systems; this
+#               one gate in CI is what stands between you and a silent regression.
+#
+# Run:  python labs/03_eval_gate.py
 GOLDEN = [
   {"q": "Capital of Portugal?",        "must_include": ["Lisbon"]},
   {"q": "2 + 2 * 3 = ?",               "must_include": ["8"]},

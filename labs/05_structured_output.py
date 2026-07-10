@@ -1,4 +1,18 @@
-# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
+# Leapfrog Labs · https://leapfrog.lerias.org · code MIT licensed
+# ────────────────────────────────────────────────────────────
+# Lab 05 — Make it do one real thing: structured output      Ch 6
+# Needs a model with JSON mode (or any model + the retry below).
+#
+# WHAT IT IS    The moment output stops being chat and becomes data your
+#               code can act on — JSON, validated, with a self-correcting retry.
+# HOW IT WORKS  1) ask for a strict JSON shape   2) parse and validate it
+#               3) if it's wrong, re-ask with the error (validate-and-retry)
+# PROOF POINT   You get back {sentiment, priority, tags} you can branch on —
+#               and it fixes itself when the first reply is malformed.
+# WHY DO IT     Every embedded AI feature rests on reliable structured output;
+#               this validate-and-retry loop is the durable pattern behind it.
+#
+# Run:  export LLM_API_KEY=...   then   python labs/05_structured_output.py
 # pip install requests
 import requests, os, json
 

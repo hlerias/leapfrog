@@ -1,4 +1,18 @@
-# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
+# Leapfrog Labs · https://leapfrog.lerias.org · code MIT licensed
+# ────────────────────────────────────────────────────────────
+# Lab 06 — Fix the RAG: chunk, retrieve, rerank              Ch 7
+# No API key — first run downloads two small local models.
+#
+# WHAT IT IS    The fix for Lab 02: retrieve cheaply, then rerank precisely.
+# HOW IT WORKS  1) a bi-encoder recalls the top-k candidates fast
+#               2) a cross-encoder scores each (question, candidate) pair
+#               3) return the highest-scoring passage
+# PROOF POINT   "offsite in the autumn?" now returns Lisbon (Q3) — the passage
+#               naive top-1 missed in Lab 02. Two stages beat one.
+# WHY DO IT     Retrieve-then-rerank is the single biggest RAG quality upgrade,
+#               and it's about fifteen lines.
+#
+# Run:  python labs/06_rag_rerank.py
 # pip install sentence-transformers
 from sentence_transformers import SentenceTransformer, CrossEncoder
 

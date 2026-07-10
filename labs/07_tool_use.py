@@ -1,4 +1,18 @@
-# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
+# Leapfrog Labs · https://leapfrog.lerias.org · code MIT licensed
+# ────────────────────────────────────────────────────────────
+# Lab 07 — Give the model a tool                             Ch 6
+# Needs a model with tool calling.
+#
+# WHAT IT IS    An agent stripped to its core: the model proposes a function
+#               call, YOUR code runs it, and the result goes back.
+# HOW IT WORKS  1) declare one tool   2) loop: model -> tool_calls ->
+#               you run them -> feed results back -> repeat until it answers
+# PROOF POINT   The model calls get_headcount, your code runs the real
+#               function, and it composes the answer from what you returned.
+# WHY DO IT     "Model proposes, your code disposes" is the whole basis of
+#               agents — and exactly where least privilege lives.
+#
+# Run:  export LLM_API_KEY=...   then   python labs/07_tool_use.py
 # pip install requests
 import requests, os, json
 

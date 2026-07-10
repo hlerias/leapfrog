@@ -1,4 +1,17 @@
-# Leapfrog Labs — see https://leapfrog.lerias.org — MIT licensed
+# Leapfrog Labs · https://leapfrog.lerias.org · code MIT licensed
+# ────────────────────────────────────────────────────────────
+# Lab 01 — Your first call, and read the meter          Ch 1 & 5
+# Needs a model: a real API key OR a local Ollama (free).
+#
+# WHAT IT IS    One real model call — and the exact tokens and cost it ran up.
+# HOW IT WORKS  1) POST one message to an OpenAI-compatible endpoint
+#               2) print the reply   3) price it from the usage token counts
+# PROOF POINT   The `usage` block is the whole point: output tokens cost far
+#               more than input, and that printed figure is real money.
+# WHY DO IT     You can't reason about AI cost until you've watched one
+#               call's meter move — everything downstream is this, scaled.
+#
+# Run:  export LLM_API_KEY=...   then   python labs/01_first_call.py
 # pip install requests
 import requests, os
 
