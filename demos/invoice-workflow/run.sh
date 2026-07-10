@@ -29,8 +29,17 @@ pip install -q -r requirements.txt
 
 # 2. Ollama installed? ------------------------------------------------------
 if ! command -v ollama >/dev/null 2>&1; then
-  say "Ollama not found — installing it (from https://ollama.com; may ask for sudo)"
-  curl -fsSL https://ollama.com/install.sh | sh
+  say "Ollama not found — installing it (from https://ollama.com)"
+  if [ "$(uname -s)" = "Darwin" ]; then
+    if command -v brew >/dev/null 2>&1; then
+      brew install ollama
+    else
+      echo "On macOS, install Ollama from https://ollama.com/download (or 'brew install ollama'), then re-run." >&2
+      exit 1
+    fi
+  else
+    curl -fsSL https://ollama.com/install.sh | sh
+  fi
 fi
 
 # 3. Ollama running? --------------------------------------------------------

@@ -28,6 +28,20 @@ step 4 refuses it. The model can be wrong and the workflow still holds.
 
 ## Run it (one command, everything configured)
 
+**Fresh machine?** `setup.sh` installs *everything* — system tools (python3,
+venv, pip, curl, git), Ollama, a local model, and the Python deps — then runs
+the demo:
+
+```bash
+cd demos/invoice-workflow
+./setup.sh
+```
+
+Works on Linux (apt / dnf / pacman / zypper) and macOS (Homebrew). On Windows,
+run it inside WSL — see [`../../docs/setup-wsl.md`](../../docs/setup-wsl.md).
+
+**Already have Python + curl?** Skip straight to the runner:
+
 ```bash
 cd demos/invoice-workflow
 ./run.sh
@@ -71,6 +85,7 @@ Expected result: `acme` **auto-approves**, `globex` **needs approval** (over the
 
 | File | What it is |
 |------|------------|
+| `setup.sh` | Fresh-machine installer: system tools, then hands off to `run.sh` |
 | `run.sh` | One-command bootstrap: env + Ollama + model + run |
 | `invoice_workflow.py` | The four-step pipeline, ~180 lines, commented |
 | `sample_invoices/` | Four realistic messy invoices, covering all three routes |
