@@ -1,0 +1,15 @@
+GLOBEX CONSULTING GROUP
+Invoice reference GBX/2026/1180  ·  issued 2026-04-02
+
+For: Leapfrog Labs — Cloud migration advisory, Q1
+
+  - Discovery workshop (2 days) .................  3,600.00
+  - Architecture review .........................  2,400.00
+  - Landing-zone build assistance ...............  6,750.00
+
+                                Subtotal   12,750.00
+                                Tax (0%)        0.00
+                                --------------------
+                                Total EUR  12,750.00
+
+Net 45. Wire to IBAN on file.

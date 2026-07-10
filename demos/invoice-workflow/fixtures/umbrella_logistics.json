@@ -1,0 +1,14 @@
+{
+  "vendor": "Umbrella Logistics",
+  "invoice_number": null,
+  "invoice_date": "2026-03-28",
+  "currency": "EUR",
+  "line_items": [
+    {"description": "Pallet freight, Lisbon -> Madrid", "amount": 540.00},
+    {"description": "Fuel surcharge", "amount": 61.00},
+    {"description": "Insurance", "amount": 25.00}
+  ],
+  "subtotal": 626.00,
+  "tax": 143.98,
+  "total": null
+}

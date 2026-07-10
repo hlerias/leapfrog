@@ -1,0 +1,14 @@
+{
+  "vendor": "Initech Office Services",
+  "invoice_number": "INV 2026-2231",
+  "invoice_date": "2026-04-09",
+  "currency": "EUR",
+  "line_items": [
+    {"description": "Monthly cleaning", "amount": 420.00},
+    {"description": "Window service", "amount": 130.00},
+    {"description": "Consumables restock", "amount": 168.00}
+  ],
+  "subtotal": 718.00,
+  "tax": 165.14,
+  "total": 812.00
+}

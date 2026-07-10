@@ -1,0 +1,14 @@
+{
+  "vendor": "ACME Hardware Supply",
+  "invoice_number": "AC-2026-0417",
+  "invoice_date": "2026-03-14",
+  "currency": "EUR",
+  "line_items": [
+    {"description": "Steel brackets (box of 50)", "amount": 120.00},
+    {"description": "Assorted fasteners", "amount": 45.50},
+    {"description": "Delivery", "amount": 14.50}
+  ],
+  "subtotal": 180.00,
+  "tax": 41.40,
+  "total": 221.40
+}

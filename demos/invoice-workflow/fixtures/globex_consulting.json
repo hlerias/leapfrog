@@ -1,0 +1,14 @@
+{
+  "vendor": "Globex Consulting Group",
+  "invoice_number": "GBX/2026/1180",
+  "invoice_date": "2026-04-02",
+  "currency": "EUR",
+  "line_items": [
+    {"description": "Discovery workshop (2 days)", "amount": 3600.00},
+    {"description": "Architecture review", "amount": 2400.00},
+    {"description": "Landing-zone build assistance", "amount": 6750.00}
+  ],
+  "subtotal": 12750.00,
+  "tax": 0.00,
+  "total": 12750.00
+}

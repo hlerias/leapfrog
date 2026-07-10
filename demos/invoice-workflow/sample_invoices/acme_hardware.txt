@@ -1,0 +1,19 @@
+ACME HARDWARE SUPPLY
+123 Steel Road, Porto
+VAT: PT501234567
+
+Invoice #: AC-2026-0417
+Date: 14 March 2026
+Bill to: Leapfrog Labs
+
+Description                         Amount
+------------------------------------------
+Steel brackets (box of 50)          120.00
+Assorted fasteners                   45.50
+Delivery                             14.50
+------------------------------------------
+Subtotal                            180.00
+VAT (23%)                            41.40
+TOTAL DUE                           EUR 221.40
+
+Payment terms: 30 days. Thank you for your business.
