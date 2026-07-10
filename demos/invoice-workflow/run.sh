@@ -27,19 +27,33 @@ source .venv/bin/activate
 pip install -q --upgrade pip
 pip install -q -r requirements.txt
 
-# 2. Ollama installed? ------------------------------------------------------
+# 2. Ollama installed? (no sudo — installs into $HOME) ----------------------
+# Corporate machines rarely grant sudo, so we install Ollama entirely in the
+# user's home directory. Models live in ~/.ollama. Nothing touches the system.
+export PATH="$HOME/.local/bin:$PATH"          # find a prior userspace install
 if ! command -v ollama >/dev/null 2>&1; then
-  say "Ollama not found — installing it (from https://ollama.com)"
-  if [ "$(uname -s)" = "Darwin" ]; then
+  say "Ollama not found — installing it into \$HOME/.local (no sudo needed)"
+  os="$(uname -s)"; arch="$(uname -m)"
+  case "$arch" in x86_64|amd64) arch=amd64 ;; aarch64|arm64) arch=arm64 ;; esac
+  if [ "$os" = "Linux" ]; then
+    mkdir -p "$HOME/.local"
+    curl -fsSL "https://ollama.com/download/ollama-linux-${arch}.tgz" -o /tmp/leapfrog-ollama.tgz
+    tar -C "$HOME/.local" -xzf /tmp/leapfrog-ollama.tgz
+    export PATH="$HOME/.local/bin:$PATH"
+    echo "    installed to $HOME/.local/bin/ollama"
+  elif [ "$os" = "Darwin" ]; then
     if command -v brew >/dev/null 2>&1; then
       brew install ollama
     else
       echo "On macOS, install Ollama from https://ollama.com/download (or 'brew install ollama'), then re-run." >&2
       exit 1
     fi
-  else
-    curl -fsSL https://ollama.com/install.sh | sh
   fi
+fi
+if ! command -v ollama >/dev/null 2>&1; then
+  echo "Ollama install did not land on PATH. Add it with:" >&2
+  echo "  export PATH=\"\$HOME/.local/bin:\$PATH\"" >&2
+  exit 1
 fi
 
 # 3. Ollama running? --------------------------------------------------------

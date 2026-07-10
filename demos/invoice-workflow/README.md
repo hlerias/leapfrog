@@ -52,6 +52,11 @@ if it isn't already there, pulls a small model (`llama3.2` by default), and runs
 the workflow against the four sample invoices. No API key, no cost. First run
 downloads the model; after that it's instant.
 
+**No sudo? (locked-down corporate machine)** — `run.sh` installs Ollama entirely
+in your home directory (`~/.local/bin`, models in `~/.ollama`). It never needs
+root and never touches the system. That's the whole point: this runs where the
+book says it should.
+
 Low on RAM? Use a smaller model:
 
 ```bash
