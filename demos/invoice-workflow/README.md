@@ -122,28 +122,39 @@ JSON validated, every arithmetic check (the ones that pass and the ones that
 don't), and why the policy chose the route. Add `--brief` for one terse block per
 invoice instead.
 
-## Your turn — write a step in the chain
+## Your turn — extend the pipeline yourself
 
-Reading the pipeline is one thing; extending it is where it sticks. `your_turn.py`
-hands you a real task: **add one check to the chain.** Accounts-payable teams never
-auto-pay an invoice dated in the *future* — and the pipeline doesn't check dates yet.
-You write that check.
+Reading the pipeline is one thing; extending it is where it sticks. Two hands-on,
+auto-graded exercises, one per stage you'd actually own. Each grades your code
+against a small golden set (a tiny eval, exactly like Chapter 8), prints PASS/FAIL
+with progressive hints, and — once you pass — shows your code flip a real decision.
+No model, no network, no key: pure pipeline logic. Each file has the solution at the
+bottom if you get stuck.
+
+**Exercise 1 — write a check (step 3 of the chain).** Accounts-payable teams never
+auto-pay an invoice dated in the *future*, and the pipeline doesn't check dates yet.
+You write that check; passing flips the future-dated invoice `auto-approve → hold-review`.
 
 ```bash
 python your_turn.py
 ```
 
-It grades your check against a small golden set (a tiny eval, exactly like Chapter 8),
-prints PASS/FAIL with progressive hints, and — once you pass — shows your check flip a
-real decision: the future-dated invoice goes `auto-approve → hold-review`. No model, no
-network, no key: pure pipeline logic. The solution is at the bottom of the file if you
-get stuck.
+**Exercise 2 — write the policy (step 4, the decision).** Every invoice currently
+shares one €1,000 approval limit. Real teams give trusted vendors a bigger limit.
+You write that policy; passing flips a trusted vendor's €3,000 invoice
+`needs-approval → auto-approve`. This is *containment* — the model never sets the
+limit, your code does.
+
+```bash
+python your_turn_2.py
+```
 
 ## What's here
 
 | File | What it is |
 |------|------------|
-| `your_turn.py` | Hands-on exercise: write a check that plugs into the chain (auto-graded) |
+| `your_turn.py` | Exercise 1: write a check that plugs into the chain (auto-graded) |
+| `your_turn_2.py` | Exercise 2: write the per-vendor approval policy (auto-graded) |
 | `setup.sh` | Fresh-machine installer: system tools, then hands off to `run.sh` |
 | `run.sh` | One-command bootstrap (Ollama backend): env + Ollama + model + run |
 | `run_local.sh` | Corporate-proof runner (Hugging Face transformers, no Ollama/sudo) |

@@ -238,9 +238,9 @@ def _num(v):
 
 
 # --- 4. DECIDE (bounded policy — the model never chooses the route) ---------
-def decide(obj, extra_checks=()):
+def decide(obj, extra_checks=(), approval_threshold=None):
     ok, checks = reconcile(obj)
-    for chk in extra_checks:                    # learner-written steps plug in here
+    for chk in extra_checks:                    # learner-written checks plug in here
         try:
             r = chk(obj) or {}
             checks.append({"ok": bool(r.get("ok", True)),
@@ -250,15 +250,23 @@ def decide(obj, extra_checks=()):
     ok = all(c["ok"] for c in checks)
     total = _num(obj.get("total"))
 
+    # the approval limit — a fixed number, or a learner-written policy(obj)->limit
+    if callable(approval_threshold):
+        limit = float(approval_threshold(obj))
+    elif approval_threshold is not None:
+        limit = float(approval_threshold)
+    else:
+        limit = APPROVAL_THRESHOLD
+
     if not ok:
         route = "hold-review"
         why = "reconciliation failed — a human must look"
-    elif total is not None and total > APPROVAL_THRESHOLD:
+    elif total is not None and total > limit:
         route = "needs-approval"
-        why = f"reconciled, but total {total:.2f} is over the {APPROVAL_THRESHOLD:.0f} approval limit"
+        why = f"reconciled, but total {total:.2f} is over the {limit:.0f} approval limit"
     else:
         route = "auto-approve"
-        why = f"reconciled, and total {total:.2f} is under the {APPROVAL_THRESHOLD:.0f} limit"
+        why = f"reconciled, and total {total:.2f} is under the {limit:.0f} limit"
 
     # containment: nothing outside the allowlist can ever escape this function
     if route not in ROUTES:
