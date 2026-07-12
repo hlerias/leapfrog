@@ -1,0 +1,4 @@
+Outages are P1 and page the on-call engineer immediately.
+On-call rotations run weekly, handed over on Monday mornings.
+Escalate to the incident commander if an outage is not contained within 30 minutes.
+Billing questions go to finance, not to engineering.

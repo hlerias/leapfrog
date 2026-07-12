@@ -1,0 +1,5 @@
+# Retrieval (bi-encoder + cross-encoder) — the same stack as lab 06.
+# sentence-transformers pulls in PyTorch, a large first-time download.
+# requests is only used by the optional --model answer path.
+requests
+sentence-transformers

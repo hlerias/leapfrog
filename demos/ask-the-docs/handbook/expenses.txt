@@ -1,0 +1,4 @@
+Submit expenses within 30 days of the spend.
+Meals are capped at 40 EUR per day while travelling.
+Alcohol is not reimbursable.
+Reimbursements over 500 EUR need manager approval.
