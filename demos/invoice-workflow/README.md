@@ -124,29 +124,40 @@ invoice instead.
 
 ## Your turn — extend the pipeline yourself
 
-Reading the pipeline is one thing; extending it is where it sticks. Two hands-on,
-auto-graded exercises, one per stage you'd actually own. Each grades your code
-against a small golden set (a tiny eval, exactly like Chapter 8), prints PASS/FAIL
-with progressive hints, and — once you pass — shows your code flip a real decision.
-No model, no network, no key: pure pipeline logic. Each file has the solution at the
-bottom if you get stuck.
+Reading the pipeline is one thing; extending it is where it sticks. **Four hands-on,
+auto-graded exercises of increasing difficulty.** Each grades your code against a small
+golden set (a tiny eval, exactly like Chapter 8), prints PASS/FAIL with progressive
+hints, and — once you pass — shows your code change a real decision. No model, no
+network, no key: pure pipeline logic. Each file has the solution at the bottom if you
+get stuck.
 
-**Exercise 1 — write a check (step 3 of the chain).** Accounts-payable teams never
-auto-pay an invoice dated in the *future*, and the pipeline doesn't check dates yet.
-You write that check; passing flips the future-dated invoice `auto-approve → hold-review`.
+Do them in order — each adds one new idea:
+
+**1 · write a check** *(step 3 of the chain)* — `your_turn.py`
+AP teams never auto-pay an invoice dated in the *future*, and the pipeline doesn't check
+dates. Write the check; passing flips the future-dated invoice `auto-approve → hold-review`.
+
+**2 · write the policy** *(step 4, the decision)* — `your_turn_2.py`
+Every invoice shares one €1,000 limit. Give trusted vendors a bigger one. Passing flips a
+trusted vendor's €3,000 invoice `needs-approval → auto-approve`. This is *containment* —
+the model never sets the limit, your code does.
+
+**3 · a check that remembers** *(state)* — `your_turn_3.py`
+A vendor submits the same invoice twice; paying both is a double payment. Write a check
+that holds duplicates — which means it has to *remember* what it has seen. New idea: a
+check can carry state.
+
+**4 · write the eval gate** *(the meta one)* — `your_turn_4.py`
+The hardest: write the gate that decides whether the whole pipeline may ship. It scores a
+decision function against a golden set and returns SHIP or BLOCK — and your gate is graded
+two ways: it must ship a working pipeline *and* block a quietly broken one. Wire it into
+CI and a bad change can't merge. That's Chapter 8, in code.
 
 ```bash
-python your_turn.py
-```
-
-**Exercise 2 — write the policy (step 4, the decision).** Every invoice currently
-shares one €1,000 approval limit. Real teams give trusted vendors a bigger limit.
-You write that policy; passing flips a trusted vendor's €3,000 invoice
-`needs-approval → auto-approve`. This is *containment* — the model never sets the
-limit, your code does.
-
-```bash
-python your_turn_2.py
+python your_turn.py       # 1
+python your_turn_2.py     # 2
+python your_turn_3.py     # 3
+python your_turn_4.py     # 4
 ```
 
 ## What's here
@@ -155,6 +166,8 @@ python your_turn_2.py
 |------|------------|
 | `your_turn.py` | Exercise 1: write a check that plugs into the chain (auto-graded) |
 | `your_turn_2.py` | Exercise 2: write the per-vendor approval policy (auto-graded) |
+| `your_turn_3.py` | Exercise 3: write a stateful check — duplicate detection (auto-graded) |
+| `your_turn_4.py` | Exercise 4: write the eval gate that ships or blocks the pipeline (auto-graded) |
 | `setup.sh` | Fresh-machine installer: system tools, then hands off to `run.sh` |
 | `run.sh` | One-command bootstrap (Ollama backend): env + Ollama + model + run |
 | `run_local.sh` | Corporate-proof runner (Hugging Face transformers, no Ollama/sudo) |
