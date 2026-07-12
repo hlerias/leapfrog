@@ -25,12 +25,15 @@ say() { printf "\n\033[1;36m==>\033[0m %s\n" "$*"; }
 if python -c "import torch, transformers" >/dev/null 2>&1; then
   say "Using the torch + transformers already in this environment"
 else
-  say "Setting up a Python env with torch + transformers (large first-time download)"
+  say "Setting up a Python env with torch + transformers"
+  echo "    Heads up: this downloads PyTorch (~hundreds of MB). On an older"
+  echo "    machine it can take 5+ minutes, and pip goes quiet while it unpacks"
+  echo "    torch at the end — that's normal, not a freeze. Progress shown below."
   python3 -m venv .venv
   # shellcheck disable=SC1091
   source .venv/bin/activate
   pip install -q --upgrade pip
-  pip install -q -r requirements-transformers.txt
+  pip install -r requirements-transformers.txt   # progress bars on (no -q)
 fi
 
 export LLM_BACKEND=transformers

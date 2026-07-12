@@ -21,11 +21,23 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+> ⏳ **First install is slow — that's normal.** `requirements.txt` includes
+> `sentence-transformers`, which pulls in **PyTorch** (a large download). On an
+> older machine this can take **5+ minutes**, and pip often goes quiet during the
+> final *"Installing collected packages: torch…"* step while it unpacks. It's not
+> frozen — let it finish.
+>
+> **In a hurry?** Only the RAG labs (`02`, `06`, `09`) need the heavy install.
+> For everything else, `pip install requests` is enough:
+> ```bash
+> pip install requests          # enough for labs 01, 03, 04, 05, 07, 08
+> ```
+
 Run one that needs no key at all:
 
 ```bash
-python labs/08_trace.py
-python labs/03_eval_gate.py
+python labs/08_trace.py         # no install needed at all
+python labs/03_eval_gate.py     # no install needed at all
 ```
 
 ## No API key? Run models locally (free)

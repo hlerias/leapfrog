@@ -25,7 +25,7 @@ python3 -m venv .venv
 # shellcheck disable=SC1091
 source .venv/bin/activate
 pip install -q --upgrade pip
-pip install -q -r requirements.txt
+pip install -r requirements.txt          # shows progress; this one is small (just requests)
 
 # 2. Ollama installed? (no sudo — installs into $HOME) ----------------------
 # Corporate machines rarely grant sudo, so we install Ollama entirely in the

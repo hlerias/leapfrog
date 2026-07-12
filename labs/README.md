@@ -34,9 +34,11 @@ The book makes the argument; the labs make it **undeniable**. Each one is built 
 
 Four labs run with **no API key at all**:
 
-- `08_trace.py` and `03_eval_gate.py` run as-is.
-- `02_naive_rag.py`, `06_rag_rerank.py`, and `09_ship_tiny.py` download a small
-  `sentence-transformers` model on first run (needs internet once), then run offline.
+- `08_trace.py` and `03_eval_gate.py` run as-is — **no install at all** (pure standard library).
+- `02_naive_rag.py`, `06_rag_rerank.py`, and `09_ship_tiny.py` need `sentence-transformers`,
+  which pulls in **PyTorch** — a large first-time install (**5+ minutes on an older machine**,
+  and pip goes quiet while it unpacks torch; that's normal). They also download a small model
+  on first run. Everything is cached after that.
 
 ```bash
 python labs/08_trace.py
