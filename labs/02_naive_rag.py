@@ -13,6 +13,10 @@
 #
 # Run:  python labs/02_naive_rag.py
 # pip install sentence-transformers numpy
+print("── Leapfrog Labs · Lab 02 — Watch naive RAG fail ──")
+print("First run downloads a small model (~90 MB), then runs offline.")
+print("Watch: the scores are low and 'next' isn't understood — naive top-1 is fragile.\n")
+
 from sentence_transformers import SentenceTransformer
 
 model = SentenceTransformer("all-MiniLM-L6-v2")   # small, local, free
@@ -30,4 +34,6 @@ def retrieve(q, k=1):
     return [(docs[i], round(float(scores[i]), 3)) for i in scores.argsort()[::-1][:k]]
 
 for q in ["Where is the NEXT offsite?", "What's the limit before I need sign-off?"]:
-    print(q, "->", retrieve(q))
+    doc, score = retrieve(q)[0]
+    print(f"Q: {q}")
+    print(f"   best match (score {score}): {doc}\n")

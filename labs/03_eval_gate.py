@@ -12,6 +12,9 @@
 #               one gate in CI is what stands between you and a silent regression.
 #
 # Run:  python labs/03_eval_gate.py
+print("── Leapfrog Labs · Lab 03 — A tiny eval gate ──")
+print("Watch: sabotage the answer below and the score drops under 0.90 -> BLOCKED.\n")
+
 GOLDEN = [
   {"q": "Capital of Portugal?",        "must_include": ["Lisbon"]},
   {"q": "2 + 2 * 3 = ?",               "must_include": ["8"]},

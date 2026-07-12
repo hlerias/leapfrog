@@ -14,6 +14,10 @@
 #
 # Run:  python labs/06_rag_rerank.py
 # pip install sentence-transformers
+print("── Leapfrog Labs · Lab 06 — Fix the RAG: retrieve, then rerank ──")
+print("First run downloads two small models. Watch: it now returns the Q3 (Lisbon)")
+print("passage that naive top-1 missed in Lab 02.\n")
+
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
 bi = SentenceTransformer("all-MiniLM-L6-v2")               # fast retriever
@@ -23,14 +27,16 @@ text = ("The Q2 offsite was in Berlin on April 9th. "
         "The Q3 offsite is in Lisbon on October 14th. "
         "Reimbursements over 500 EUR need VP approval. "
         "Book travel at least three weeks ahead.")
-docs = [s.strip()+"." for s in text.split(". ") if s.strip()]   # sentence chunks
-emb  = bi.encode(docs, normalize_embeddings=True)
+docs = [s.strip() + "." for s in text.split(". ") if s.strip()]   # sentence chunks
+emb = bi.encode(docs, normalize_embeddings=True)
 
 def answer(q, k=4):
-    qv  = bi.encode([q], normalize_embeddings=True)[0]
+    qv = bi.encode([q], normalize_embeddings=True)[0]
     top = (emb @ qv).argsort()[::-1][:k]                    # 1) cheap recall
     cand = [docs[i] for i in top]
-    ranked = sorted(zip(cand, ce.predict([(q,c) for c in cand])), key=lambda x:-x[1])
+    ranked = sorted(zip(cand, ce.predict([(q, c) for c in cand])), key=lambda x: -x[1])
     return ranked[0][0]                                     # 2) precise rerank
 
-print(answer("Where is the offsite in the autumn?"))
+q = "Where is the offsite in the autumn?"
+print(f"Q: {q}")
+print(f"   best passage after rerank: {answer(q)}")

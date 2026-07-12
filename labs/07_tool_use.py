@@ -14,30 +14,46 @@
 #
 # Run:  export LLM_API_KEY=...   then   python labs/07_tool_use.py
 # pip install requests
-import requests, os, json
+import os, json, requests
 
-BASE_URL=os.environ.get("LLM_BASE_URL","https://api.openai.com/v1")
-API_KEY=os.environ["LLM_API_KEY"]; MODEL=os.environ.get("LLM_MODEL","gpt-4o-mini")
+print("── Leapfrog Labs · Lab 07 — Give the model a tool ──")
+print("Watch: the model calls your get_headcount function, then composes the answer.\n")
+
+BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
+API_KEY  = os.environ.get("LLM_API_KEY")
+MODEL    = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+
+if not API_KEY:
+    raise SystemExit("This lab needs a model with tool calling. export LLM_API_KEY=... "
+                     "(or a local Ollama that supports tools). See the README.")
 
 def get_headcount(team):                       # the one real thing it may do
-    return {"platform":42,"design":9,"data":17}.get(team.lower(),0)
+    return {"platform": 42, "design": 9, "data": 17}.get(team.lower(), 0)
 
-tools=[{"type":"function","function":{"name":"get_headcount",
-  "description":"Number of people on a team",
-  "parameters":{"type":"object","properties":{"team":{"type":"string"}},"required":["team"]}}}]
+tools = [{"type": "function", "function": {"name": "get_headcount",
+  "description": "Number of people on a team",
+  "parameters": {"type": "object", "properties": {"team": {"type": "string"}}, "required": ["team"]}}}]
 
-msgs=[{"role":"user","content":"Is the platform team bigger than design?"}]
+msgs = [{"role": "user", "content": "Is the platform team bigger than design?"}]
+
 def chat(m):
-    return requests.post(f"{BASE_URL}/chat/completions",
-        headers={"Authorization":f"Bearer {API_KEY}"},
-        json={"model":MODEL,"messages":m,"tools":tools}).json()["choices"][0]["message"]
+    try:
+        r = requests.post(f"{BASE_URL}/chat/completions",
+            headers={"Authorization": f"Bearer {API_KEY}"},
+            json={"model": MODEL, "messages": m, "tools": tools}, timeout=60).json()
+    except requests.exceptions.RequestException as e:
+        raise SystemExit(f"Could not reach the model at {BASE_URL}: {e}")
+    return r["choices"][0]["message"]
 
-m=chat(msgs)
+m = chat(msgs)
 while m.get("tool_calls"):                      # the agent loop
     msgs.append(m)
     for tc in m["tool_calls"]:
-        args=json.loads(tc["function"]["arguments"])
-        msgs.append({"role":"tool","tool_call_id":tc["id"],
-                     "content":json.dumps(get_headcount(**args))})
-    m=chat(msgs)
-print(m["content"])
+        args = json.loads(tc["function"]["arguments"])
+        result = get_headcount(**args)
+        print(f"  model asked get_headcount({args})  ->  your code returned {result}")
+        msgs.append({"role": "tool", "tool_call_id": tc["id"],
+                     "content": json.dumps(result)})
+    m = chat(msgs)
+
+print("\nFinal answer:", m["content"])

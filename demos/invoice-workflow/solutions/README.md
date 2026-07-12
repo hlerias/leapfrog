@@ -92,7 +92,9 @@ The nine labs in [`../../../labs/`](../../../labs/) aren't puzzles with hidden
 answers — **they're complete, working code.** Running one *is* the answer. But
 here's roughly what each should print, so you can confirm your run matched.
 (Random ids, latencies, token counts, and any model's exact wording will differ
-run to run — the **shape** and the **proof point** are what to check.)
+run to run — the **shape** and the **proof point** are what to check.) Every lab
+now opens with a header line — its title and a one-line "what to watch" — before
+the output below.
 
 **`01_first_call.py`** — *needs a model* — the model's two-sentence answer, then
 the meter:
@@ -104,8 +106,10 @@ Proof point: `out` tokens cost far more than `in`.
 
 **`02_naive_rag.py`** — *no key (downloads a small model)*:
 ```
-Where is the NEXT offsite? -> [('The Q3 offsite is in Lisbon on October 14th.', 0.51)]
-What's the limit before I need sign-off? -> [('Reimbursements over 500 EUR need VP approval.', 0.15)]
+Q: Where is the NEXT offsite?
+   best match (score 0.51): The Q3 offsite is in Lisbon on October 14th.
+Q: What's the limit before I need sign-off?
+   best match (score 0.15): Reimbursements over 500 EUR need VP approval.
 ```
 Proof point: the scores are *low* and "next" isn't understood — naive top-1 is
 fragile. (Scores vary slightly by model version.)
@@ -119,9 +123,10 @@ PASS - Who wrote the book Leapfrog?
 score 100%  ->  SHIP
 ```
 
-**`04_red_team_injection.py`** — *needs a model* — **prints nothing on its own**;
-it only builds `naive_prompt` and `defended_messages`. Send both to your Lab 1
-model and compare: the naive one often replies `PWNED …`, the defended one
+**`04_red_team_injection.py`** — *optional model* — prints the poisoned document
+and explains the attack. With **no key** it tells you what to expect and exits
+cleanly. **Set `LLM_API_KEY`** (or point at Ollama) and it sends both prompts and
+prints the two replies — the naive one often replies `PWNED …`, the defended one
 summarizes.
 
 **`05_structured_output.py`** — *needs a model with JSON mode* — a validated object:
