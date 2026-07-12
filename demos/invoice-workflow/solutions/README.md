@@ -86,11 +86,88 @@ fails. Wire `run_eval` into CI and a bad change can't merge. That's Chapter 8.
 
 ---
 
-## What about the labs?
+## The labs — "did my run work?"
 
 The nine labs in [`../../../labs/`](../../../labs/) aren't puzzles with hidden
-answers — **they're complete, working code.** Running one *is* the answer: read
-the header (what it is, how it works, its proof point), run it, and watch the
-proof point happen. See [`labs/README.md`](../../../labs/README.md) for what each
-one demonstrates. The only "blanks" are the two labs with a `# plug in your
-model` stub — that's a wiring point (drop in your Lab 1 call), not a puzzle.
+answers — **they're complete, working code.** Running one *is* the answer. But
+here's roughly what each should print, so you can confirm your run matched.
+(Random ids, latencies, token counts, and any model's exact wording will differ
+run to run — the **shape** and the **proof point** are what to check.)
+
+**`01_first_call.py`** — *needs a model* — the model's two-sentence answer, then
+the meter:
+```
+Retrieval-augmented generation is ...
+in=<n>  out=<n>  cost=$<0.0000xx>
+```
+Proof point: `out` tokens cost far more than `in`.
+
+**`02_naive_rag.py`** — *no key (downloads a small model)*:
+```
+Where is the NEXT offsite? -> [('The Q3 offsite is in Lisbon on October 14th.', 0.51)]
+What's the limit before I need sign-off? -> [('Reimbursements over 500 EUR need VP approval.', 0.15)]
+```
+Proof point: the scores are *low* and "next" isn't understood — naive top-1 is
+fragile. (Scores vary slightly by model version.)
+
+**`03_eval_gate.py`** — *no install* — deterministic:
+```
+PASS - Capital of Portugal?
+PASS - 2 + 2 * 3 = ?
+PASS - Who wrote the book Leapfrog?
+
+score 100%  ->  SHIP
+```
+
+**`04_red_team_injection.py`** — *needs a model* — **prints nothing on its own**;
+it only builds `naive_prompt` and `defended_messages`. Send both to your Lab 1
+model and compare: the naive one often replies `PWNED …`, the defended one
+summarizes.
+
+**`05_structured_output.py`** — *needs a model with JSON mode* — a validated object:
+```
+OK -> {'sentiment': 'negative', 'priority': 1, 'tags': ['outage', 'dashboard', ...]}
+```
+Proof point: data your code can branch on (values vary; sentiment negative,
+priority low for the furious-customers ticket).
+
+**`06_rag_rerank.py`** — *no key (downloads two small models)*:
+```
+The Q3 offsite is in Lisbon on October 14th.
+```
+Proof point: rerank surfaces the Q3 passage that naive top-1 (Lab 02) missed.
+
+**`07_tool_use.py`** — *needs a model with tool calling* — the model's final
+answer after the tool round-trip, e.g.:
+```
+Yes — the platform team (42) is larger than design (9).
+```
+Proof point: the model called your `get_headcount` function and composed the
+answer from what you returned.
+
+**`08_trace.py`** — *no install* — one JSON span:
+```
+{
+  "id": "<8 hex chars>",
+  "inputs": {"prompt": "Summarize Q3", "model": "gpt-4o-mini"},
+  "tokens": {"in": 812, "out": 143},
+  "ok": true,
+  "latency_ms": <~150>
+}
+```
+
+**`09_ship_tiny.py`** — *no key (downloads a small model)* — a bounded decision:
+```
+{
+  "ticket": "The billing page has been down for an hour!",
+  "policy_used": "Outages are P1 and page on-call immediately.",
+  "route": "on-call",
+  "priority": 1
+}
+```
+Proof point: it grounds on a policy, returns a structured route, and stays inside
+its allowlist. (`route` is `on-call` because "down" is in the ticket; `policy_used`
+is whichever policy grounds closest.)
+
+See [`labs/README.md`](../../../labs/README.md) for the fuller "what each one
+proves" list.
