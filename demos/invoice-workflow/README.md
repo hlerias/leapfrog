@@ -122,10 +122,28 @@ JSON validated, every arithmetic check (the ones that pass and the ones that
 don't), and why the policy chose the route. Add `--brief` for one terse block per
 invoice instead.
 
+## Your turn — write a step in the chain
+
+Reading the pipeline is one thing; extending it is where it sticks. `your_turn.py`
+hands you a real task: **add one check to the chain.** Accounts-payable teams never
+auto-pay an invoice dated in the *future* — and the pipeline doesn't check dates yet.
+You write that check.
+
+```bash
+python your_turn.py
+```
+
+It grades your check against a small golden set (a tiny eval, exactly like Chapter 8),
+prints PASS/FAIL with progressive hints, and — once you pass — shows your check flip a
+real decision: the future-dated invoice goes `auto-approve → hold-review`. No model, no
+network, no key: pure pipeline logic. The solution is at the bottom of the file if you
+get stuck.
+
 ## What's here
 
 | File | What it is |
 |------|------------|
+| `your_turn.py` | Hands-on exercise: write a check that plugs into the chain (auto-graded) |
 | `setup.sh` | Fresh-machine installer: system tools, then hands off to `run.sh` |
 | `run.sh` | One-command bootstrap (Ollama backend): env + Ollama + model + run |
 | `run_local.sh` | Corporate-proof runner (Hugging Face transformers, no Ollama/sudo) |

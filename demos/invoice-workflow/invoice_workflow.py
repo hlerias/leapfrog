@@ -238,8 +238,16 @@ def _num(v):
 
 
 # --- 4. DECIDE (bounded policy — the model never chooses the route) ---------
-def decide(obj):
+def decide(obj, extra_checks=()):
     ok, checks = reconcile(obj)
+    for chk in extra_checks:                    # learner-written steps plug in here
+        try:
+            r = chk(obj) or {}
+            checks.append({"ok": bool(r.get("ok", True)),
+                           "text": r.get("text", "custom check")})
+        except Exception as e:
+            checks.append({"ok": False, "text": f"custom check errored: {e}"})
+    ok = all(c["ok"] for c in checks)
     total = _num(obj.get("total"))
 
     if not ok:
