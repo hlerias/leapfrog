@@ -86,6 +86,7 @@ def grade():
                                 "sets the limit, your code does."))
         return 0
     print("  " + iw._c("31", f"BLOCKED — {passed}/{len(GOLDEN)}. Keep going."))
+    print("  " + iw._c("2", "Edit approval_limit() near the top of this file, then run it again."))
     print(iw._c("2",
         "\n  Hints (each reveals a little more):\n"
         '  1. Normalise first:  name = (inv["vendor"] or "").lower()\n'

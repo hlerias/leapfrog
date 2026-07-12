@@ -90,6 +90,7 @@ def grade():
                                 "the model can't. That's the job."))
         return 0
     print("  " + iw._c("31", f"BLOCKED — {passed}/{len(GOLDEN)}. Keep going."))
+    print("  " + iw._c("2", "Edit student_check() near the top of this file, then run it again."))
     print(iw._c("2",
         "\n  Hints (each reveals a little more):\n"
         '  1. To hold an invoice, return {"ok": False, "text": "dated in the future"}.\n'
