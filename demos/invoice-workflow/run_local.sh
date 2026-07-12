@@ -25,10 +25,14 @@ say() { printf "\n\033[1;36m==>\033[0m %s\n" "$*"; }
 if python -c "import torch, transformers" >/dev/null 2>&1; then
   say "Using the torch + transformers already in this environment"
 else
-  say "Setting up a Python env with torch + transformers"
-  echo "    Heads up: this downloads PyTorch (~hundreds of MB). On an older"
-  echo "    machine it can take 5+ minutes, and pip goes quiet while it unpacks"
-  echo "    torch at the end — that's normal, not a freeze. Progress shown below."
+  printf "\n\033[1;33m┌─ Heads up: this next step takes a while ─────────────────────┐\033[0m\n"
+  printf "\033[33m│\033[0m  The local model runs on \033[1mPyTorch\033[0m, a big download (hundreds of MB).\n"
+  printf "\033[33m│\033[0m  On an older machine expect \033[1m5+ minutes\033[0m the first time.\n"
+  printf "\033[33m│\033[0m  Near the end, pip will look \033[1mfrozen\033[0m while it unpacks torch —\n"
+  printf "\033[33m│\033[0m  that is normal, not a crash. Please just let it finish.\n"
+  printf "\033[33m│\033[0m  It only happens once; every run after this is instant.\n"
+  printf "\033[1;33m└─────────────────────────────────────────────────────────────┘\033[0m\n"
+  say "Setting up a Python env with torch + transformers (progress below)"
   python3 -m venv .venv
   # shellcheck disable=SC1091
   source .venv/bin/activate

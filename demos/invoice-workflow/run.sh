@@ -68,7 +68,12 @@ fi
 
 # 4. Model pulled? ----------------------------------------------------------
 if ! ollama list 2>/dev/null | grep -q "${MODEL%%:*}"; then
-  say "Pulling the model '$MODEL' (first run only — this is the big download)"
+  printf "\n\033[1;33m┌─ Heads up: downloading the model ────────────────────────────┐\033[0m\n"
+  printf "\033[33m│\033[0m  '%s' is a \033[1mbig download\033[0m (~1-2 GB). First run only —\n" "$MODEL"
+  printf "\033[33m│\033[0m  it can take a few minutes on a slow connection. Progress below.\n"
+  printf "\033[33m│\033[0m  Every run after this reuses it and is instant.\n"
+  printf "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m\n"
+  say "Pulling the model '$MODEL'"
   ollama pull "$MODEL"
 fi
 

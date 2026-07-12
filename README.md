@@ -21,6 +21,13 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+**Prefer one command with clear progress?** `./setup-labs.sh` does the venv +
+install for you and tells you exactly what's happening (including the slow part):
+
+```bash
+./setup-labs.sh
+```
+
 > ⏳ **First install is slow — that's normal.** `requirements.txt` includes
 > `sentence-transformers`, which pulls in **PyTorch** (a large download). On an
 > older machine this can take **5+ minutes**, and pip often goes quiet during the
