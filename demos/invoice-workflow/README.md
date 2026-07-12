@@ -160,6 +160,10 @@ python your_turn_3.py     # 3
 python your_turn_4.py     # 4
 ```
 
+Stuck? Each file has hints and a solution at the bottom, and
+[`solutions/`](solutions/) collects all four with explanations — but *try first*;
+the point is watching your own code go from BLOCKED to SHIP.
+
 ## What's here
 
 | File | What it is |
