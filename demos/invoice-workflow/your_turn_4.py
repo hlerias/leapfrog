@@ -74,6 +74,11 @@ def broken_decider(inv):
 def grade():
     iw.banner()
     print("  " + iw._c("2", "your turn (4) · write the eval gate\n"))
+    print("  " + iw._c("2", f"Your run_eval(decider) scores a decider against this golden set "
+                            f"(ship at ≥ {THRESHOLD:.0%}):"))
+    for inv, exp in GOLDEN:
+        print("  " + iw._c("2", f"    {inv['vendor']:<9} {inv['total']:>6.0f} EUR  →  should be {exp}"))
+    print("  " + iw._c("2", "\n  We test YOUR gate on two deciders (these are the inputs):\n"))
     trials = [
         ("the real pipeline", good_decider, True, "SHIP"),
         ("a broken pipeline (auto-approves everything)", broken_decider, False, "BLOCK"),
@@ -85,7 +90,8 @@ def grade():
         passed += ok
         mark = iw._c("32", "PASS") if ok else iw._c("31", "FAIL")
         got_word = "SHIP" if got_ship else "BLOCK"
-        print(f"  {mark}  your gate on {label:<44} want {want_word}, got {got_word}")
+        print(f"  {mark}  {iw._c('2', 'in:')} {label:<46} {iw._c('2', '→')} "
+              f"want {want_word:<5} got {got_word}")
 
     print("\n  " + iw._c("2", "─" * 58))
     if passed == len(trials):

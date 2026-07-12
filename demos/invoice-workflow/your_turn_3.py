@@ -61,6 +61,8 @@ GOLDEN = [
 def grade():
     iw.banner()
     print("  " + iw._c("2", "your turn (3) · a check that remembers\n"))
+    print("  " + iw._c("2", "Invoices arrive IN ORDER; your student_check(inv) sees each one in turn."))
+    print("  " + iw._c("2", "The input that matters is inv['invoice_number'].\n"))
     seen.clear()                          # fresh run
     passed = 0
     for i, (inv, should_hold) in enumerate(GOLDEN, 1):
@@ -71,8 +73,9 @@ def grade():
         mark = iw._c("32", "PASS") if ok else iw._c("31", "FAIL")
         want = "HOLD" if should_hold else "pass"
         got = "HOLD" if held else "pass"
-        print(f"  {mark}  #{i}  {inv['vendor']:<9} {inv['invoice_number']:<8}"
-              f"  want {want}, yours said {got}")
+        inp = f"#{i} invoice_number={inv['invoice_number']:<7} ({inv['vendor']})"
+        print(f"  {mark}  {iw._c('2', 'in:')} {inp}  {iw._c('2', '→')} "
+              f"want {want:<4} got {got}")
 
     print("\n  " + iw._c("2", "─" * 58))
     if passed == len(GOLDEN):

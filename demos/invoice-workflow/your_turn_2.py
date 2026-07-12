@@ -65,13 +65,17 @@ GOLDEN = [
 def grade():
     iw.banner()
     print("  " + iw._c("2", "your turn (2) · write the policy step\n"))
+    print("  " + iw._c("2", "Your approval_limit(inv) is called for each invoice below; the"))
+    print("  " + iw._c("2", "pipeline auto-approves under the limit you return. Trusted vendors: "
+                            + ", ".join(sorted(TRUSTED)) + ".\n"))
     passed = 0
     for inv, want in GOLDEN:
         got = iw.decide(inv, approval_threshold=approval_limit)["route"]
         ok = got == want
         passed += ok
         mark = iw._c("32", "PASS") if ok else iw._c("31", "FAIL")
-        print(f"  {mark}  {inv['vendor']:<18} {inv['total']:>8.0f} EUR   "
+        inp = f"{inv['vendor']:<18} {inv['total']:>7.0f} EUR"
+        print(f"  {mark}  {iw._c('2', 'in:')} {inp}  {iw._c('2', '→')} "
               f"want {want:<14} got {got}")
 
     print("\n  " + iw._c("2", "─" * 58))

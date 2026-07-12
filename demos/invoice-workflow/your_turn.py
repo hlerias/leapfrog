@@ -66,6 +66,8 @@ GOLDEN = [
 def grade():
     iw.banner()
     print("  " + iw._c("2", "your turn · write a step in the chain\n"))
+    print("  " + iw._c("2", "Your student_check(inv) is called once for each invoice below."))
+    print("  " + iw._c("2", f"inv is a dict (inv['invoice_date'], inv['vendor'], …). Today is {TODAY}.\n"))
     passed = 0
     for inv, should_hold in GOLDEN:
         r = student_check(inv) or {}
@@ -75,8 +77,9 @@ def grade():
         mark = iw._c("32", "PASS") if ok else iw._c("31", "FAIL")
         want = "HOLD" if should_hold else "pass"
         got = "HOLD" if held else "pass"
-        print(f"  {mark}  {inv['vendor']:<11} dated {str(inv['invoice_date']):<12}"
-              f"  want {want}, yours said {got}")
+        inp = f"date={str(inv['invoice_date']):<11} {inv['vendor']:<11}"
+        print(f"  {mark}  {iw._c('2', 'in:')} {inp} {iw._c('2', '→')} "
+              f"want {want:<4} got {got}")
 
     print("\n  " + iw._c("2", "─" * 58))
     if passed == len(GOLDEN):
