@@ -77,6 +77,15 @@ To use a hosted provider instead, copy `.env.example` to `.env`, fill it in, and
 
 Each lab is short, commented, and independent. Start with `08_trace.py` or `03_eval_gate.py` (no key), then `02_naive_rag.py` / `06_rag_rerank.py` (local model, no key).
 
+## Demos — putting it all together
+
+Beyond the single-file labs, [`demos/`](demos/) has larger, runnable examples where the pieces come together into something you'd actually ship. Both run locally with no API key on the default path — even on a locked-down corporate machine.
+
+- [**`demos/invoice-workflow/`**](demos/invoice-workflow/) — an Accounts-Payable triage pipeline: a local model reads a messy invoice into structure, then plain code validates the arithmetic, applies policy, and routes it. The model can be wrong; the pipeline catches it. Includes four hands-on, auto-graded exercises you extend yourself.
+- [**`demos/ask-the-docs/`**](demos/ask-the-docs/) — grounded Q&A, the *anti-chatbot*: a human asks questions, the tool answers only from a fixed handbook, cites its source, and refuses when it can't find the answer instead of guessing.
+
+See [`demos/README.md`](demos/README.md) for where to start.
+
 ## Setting up a lab machine
 
 New to Linux, or on a locked-down Windows PC? Two step-by-step guides:
