@@ -345,11 +345,20 @@ def _fmt(v):
 STEP = "1;38;5;44"  # step-label colour (cyan, matches the brand)
 
 
+def _show_invoice(path, raw):
+    """Print the raw invoice, as received, BEFORE the pipeline touches it —
+    so you can see exactly what the model has to read."""
+    print("\n" + _c("2", "─" * 60))
+    print("  " + _c("1", "📄 " + os.path.basename(path)))
+    print("  " + _c("2", "┌─ the invoice, as received " + "─" * 31))
+    lines = (raw or "").rstrip("\n").splitlines() or ["(empty)"]
+    for line in lines:
+        print("  " + _c("2", "│ ") + line)
+    print("  " + _c("2", "└" + "─" * 57))
+
+
 def _print_detailed(d):
     """Narrate all four steps for one invoice, so you can see what happened."""
-    print("\n" + _c("2", "─" * 60))
-    print("  " + _c("1", "📄 " + d["invoice_file"]))
-
     if d.get("error"):
         print("  " + _c(STEP, "① EXTRACT  ") + _c("31", "✗ could not read the invoice — ")
               + d["error"])
@@ -424,6 +433,13 @@ def main():
     results = []
     for f in files:
         try:
+            raw = open(f, encoding="utf-8").read()
+        except OSError:
+            raw = ""
+        if not args.brief:
+            _show_invoice(f, raw)        # show the document BEFORE the pipeline runs
+            sys.stdout.flush()           # ...so it's on screen while a real model works
+        try:
             d = process(f, args.offline)
         except Exception as e:
             d = {"invoice_file": os.path.basename(f), "route": "hold-review",
@@ -431,6 +447,7 @@ def main():
                  "why": "extraction failed — sent to a human", "vendor": None,
                  "invoice_number": None, "invoice_date": None, "currency": None,
                  "subtotal": None, "tax": None, "total": None, "n_items": 0}
+        d["raw"] = raw
         results.append(d)
         (_print_brief if args.brief else _print_detailed)(d)
 
