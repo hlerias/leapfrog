@@ -26,7 +26,9 @@ import json
 import os
 import sys
 
-import requests
+# NB: `requests` is imported lazily inside _chat() (the only place it's used),
+# so the offline demo, the transformers backend, and the your_turn exercises
+# all run with just the standard library — no pip install required.
 
 # --- config (same env vars as every other Leapfrog lab) ---------------------
 BACKEND = os.environ.get("LLM_BACKEND", "ollama")     # "ollama" | "transformers"
@@ -84,6 +86,7 @@ def extract_via_llm(raw_text):
 
 # --- backend A: any OpenAI-compatible endpoint (Ollama, vLLM, hosted) -------
 def _chat(msgs):
+    import requests   # lazy: only the Ollama/OpenAI path needs it
     try:
         r = requests.post(
             f"{BASE_URL}/chat/completions",
