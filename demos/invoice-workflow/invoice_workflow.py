@@ -121,19 +121,34 @@ def _hf_load():
             "transformers backend needs torch + transformers. Install with:\n"
             "  pip install -r requirements-transformers.txt")
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    dtype = torch.float16 if device == "cuda" else torch.float32   # fp16 halves VRAM
-    try:
-        tok = AutoTokenizer.from_pretrained(HF_MODEL)
-        try:                                            # newer transformers: dtype=
-            model = AutoModelForCausalLM.from_pretrained(HF_MODEL, dtype=dtype)
-        except TypeError:                               # older transformers: torch_dtype=
-            model = AutoModelForCausalLM.from_pretrained(HF_MODEL, torch_dtype=dtype)
-    except Exception as e:
-        raise ValueError(
-            f"could not load '{HF_MODEL}' from Hugging Face ({type(e).__name__}). "
-            "Check that huggingface.co is reachable; behind a corporate proxy you "
-            "may need HTTPS_PROXY set, an HF_TOKEN, or a mirror via HF_ENDPOINT. "
-            "A smaller model may also help: HF_MODEL=Qwen/Qwen2.5-0.5B-Instruct.")
+    dtype = torch.float16 if device == "cuda" else torch.float32
+
+    max_attempts = 5
+    for attempt in range(1, max_attempts + 1):
+        try:
+            if attempt > 1:
+                print(f"  retrying model download (attempt {attempt}/{max_attempts}) — "
+                      "huggingface.co resumes partial downloads, almost there...")
+            tok = AutoTokenizer.from_pretrained(HF_MODEL)
+            try:
+                model = AutoModelForCausalLM.from_pretrained(HF_MODEL, dtype=dtype)
+            except TypeError:
+                model = AutoModelForCausalLM.from_pretrained(HF_MODEL, torch_dtype=dtype)
+            break
+        except Exception as e:
+            # network timeouts are worth retrying; anything else is not
+            retriable = any(w in type(e).__name__ for w in ("Timeout", "Connection", "OSError"))
+            if not retriable or attempt == max_attempts:
+                raise ValueError(
+                    f"could not load '{HF_MODEL}' from Hugging Face ({type(e).__name__}). "
+                    "Check that huggingface.co is reachable; behind a corporate proxy you "
+                    "may need HTTPS_PROXY set, an HF_TOKEN, or a mirror via HF_ENDPOINT. "
+                    "A smaller model may also help: HF_MODEL=Qwen/Qwen2.5-0.5B-Instruct.")
+            import time
+            wait = 10 * attempt
+            print(f"  download interrupted ({type(e).__name__}) — waiting {wait}s before retry...")
+            time.sleep(wait)
+
     model = model.to(device)
     if tok.pad_token_id is None:
         tok.pad_token_id = tok.eos_token_id
