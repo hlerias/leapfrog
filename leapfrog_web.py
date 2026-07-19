@@ -37,6 +37,36 @@ def first_int(s):
     m = re.search(r"-?\d+", s.replace(",", ""))
     return int(m.group(0)) if m else None
 
+# ---------------------------------------------------------------- chat
+CHAT_SYSTEM = (
+    "You are the Leapfrog Lab Bench assistant, running on the user's own machine through their "
+    "local model. Help them explore the example tasks from the field guide - sentiment, counting "
+    "letters, extracting dates, date arithmetic, classification, arithmetic - and answer follow-up "
+    "questions. Keep replies short and concrete. When a task is really exact arithmetic or string "
+    "work, say so plainly - that a small model is shaky at it is the whole lesson of the labs."
+)
+
+def ask_stream(messages, timeout=300):
+    """Yield content tokens from the OpenAI-compatible endpoint as they arrive."""
+    body = json.dumps({"model": MODEL, "messages": messages, "stream": True}).encode()
+    req = urllib.request.Request(BASE.rstrip("/") + "/chat/completions", data=body,
+          headers={"Content-Type": "application/json", "Authorization": "Bearer " + KEY})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        for raw in r:                                  # response is iterable by line
+            line = raw.decode("utf-8", "replace").strip()
+            if not line.startswith("data:"):
+                continue
+            data = line[5:].strip()
+            if data == "[DONE]":
+                break
+            try:
+                delta = json.loads(data)["choices"][0].get("delta", {})
+            except Exception:
+                continue
+            piece = delta.get("content")
+            if piece:
+                yield piece
+
 # ---------------------------------------------------------------- lab 10
 TASKS10 = [
     ("sentiment",    "One word, positive or negative: the flight was delayed four hours and nobody told us.",
@@ -193,6 +223,27 @@ button:disabled{opacity:.45;cursor:default}
 .console b{color:var(--ink);font-weight:600}
 .foot{margin-top:22px;font-size:12px;color:rgba(255,255,255,.4);text-align:center}
 .foot a{color:var(--lv)}
+.chat{margin-top:24px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03);overflow:hidden}
+.chat-h{display:flex;align-items:baseline;gap:9px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.chat-h b{font-size:14px;color:var(--ink)}.chat-h span{font-size:11.5px;color:rgba(174,187,230,.6)}
+.chat-log{padding:16px 18px;max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:13px}
+.msg{display:flex;gap:11px;font-size:13.5px;line-height:1.62}
+.msg .who{flex:none;width:46px;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding-top:3px}
+.msg.u .who{color:var(--cy)}.msg.a .who{color:var(--vi)}
+.msg .txt{white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.msg.a .txt{color:var(--lv)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:2px 18px 14px}
+.chip-ex{font-family:inherit;font-size:12px;font-weight:500;color:var(--lv);background:rgba(255,255,255,.04);
+ border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;transition:border-color .2s,color .2s}
+.chip-ex:hover{border-color:rgba(52,224,224,.5);color:var(--ink)}
+.chip-ex:disabled{opacity:.4;cursor:default}
+.chat-in{display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--line)}
+.chat-in input{flex:1;font-family:inherit;font-size:13.5px;color:var(--ink);background:rgba(4,6,18,.5);
+ border:1px solid var(--line);border-radius:9px;padding:10px 14px;outline:none}
+.chat-in input:focus{border-color:rgba(52,224,224,.5)}
+.txt.cursor::after{content:"";display:inline-block;width:7px;height:1em;background:var(--cy);
+ vertical-align:-2px;margin-left:2px;border-radius:1px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
 @media(max-width:720px){.grid{grid-template-columns:1fr}h1{font-size:30px}}
 </style></head><body><div class="wrap"><div class="frame">
   <div class="hero">__MOTIF__
@@ -203,6 +254,12 @@ button:disabled{opacity:.45;cursor:default}
   <div class="status"><span class="pip" id="pip"></span><span id="stat">checking your model&hellip;</span></div>
   <div class="grid">__CARDS__</div>
   <div class="console" id="con"><span class="muted">Pick a lab above. Output appears here, live.</span></div>
+  <div class="chat" id="chat">
+    <div class="chat-h"><b>Chat with your model</b><span>&mdash; tap an example, then ask your own. Runs on your machine.</span></div>
+    <div class="chat-log" id="clog"><div class="msg a"><div class="who">model</div><div class="txt">Ask me anything, or try one of the lab examples below.</div></div></div>
+    <div class="chips" id="chips"></div>
+    <div class="chat-in"><input id="cin" placeholder="Type a message and hit Enter&hellip;" autocomplete="off"><button id="csend">Send</button></div>
+  </div>
   <div class="foot">LEAPFROG &middot; the free field guide &mdash; <a href="https://leapfrog.lerias.org">leapfrog.lerias.org</a></div>
 </div></div>
 <script>
@@ -252,6 +309,48 @@ function run(lab){
   es.onerror=()=>{es.close();busy=false;
     document.querySelectorAll('button').forEach(b=>b.disabled=false);};
 }
+
+// ---- chat with the local model (the lab examples are the suggestions) ----
+const CHAT_EX=[
+  "How many r's are in \\u201cstrawberry\\u201d?",
+  "Positive or negative: the flight was delayed four hours and nobody told us.",
+  "Extract the date as YYYY-MM-DD: invoice dated 14 March 2026.",
+  "What is 37 \\u00d7 46?",
+  "Which team handles a cracked laptop screen, IT or Legal?"
+];
+const clog=document.getElementById('clog'),cin=document.getElementById('cin'),
+      csend=document.getElementById('csend'),chips=document.getElementById('chips');
+let chatHist=[],chatBusy=false;
+CHAT_EX.forEach(t=>{const b=document.createElement('button');b.className='chip-ex';b.type='button';
+  b.textContent=t;b.onclick=()=>{if(!chatBusy){cin.value=t;sendChat();}};chips.appendChild(b);});
+function bubble(role,text){
+  const wrap=document.createElement('div');wrap.className='msg '+(role==='user'?'u':'a');
+  const who=document.createElement('div');who.className='who';who.textContent=role==='user'?'you':'model';
+  const txt=document.createElement('div');txt.className='txt';txt.textContent=text;
+  wrap.appendChild(who);wrap.appendChild(txt);clog.appendChild(wrap);
+  clog.scrollTop=clog.scrollHeight;return txt;
+}
+async function sendChat(){
+  const text=cin.value.trim();if(!text||chatBusy)return;
+  chatBusy=true;csend.disabled=true;cin.value='';
+  chips.querySelectorAll('button').forEach(b=>b.disabled=true);
+  bubble('user',text);chatHist.push({role:'user',content:text});
+  const out=bubble('assistant','');out.classList.add('cursor');
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:chatHist})});
+    const reader=res.body.getReader(),dec=new TextDecoder();let acc='';
+    while(true){const r=await reader.read();if(r.done)break;
+      acc+=dec.decode(r.value,{stream:true});out.textContent=acc;clog.scrollTop=clog.scrollHeight;}
+    out.textContent=acc||'(no response)';
+    chatHist.push({role:'assistant',content:acc});
+  }catch(e){out.textContent='\\u26a0 '+e;}
+  out.classList.remove('cursor');
+  chatBusy=false;csend.disabled=false;
+  chips.querySelectorAll('button').forEach(b=>b.disabled=false);cin.focus();
+}
+csend.onclick=sendChat;
+cin.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendChat();}});
 </script></body></html>'''
 
 def page():
@@ -305,6 +404,41 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 try:
                     emit("fail", {"text": "Lab crashed", "fix": "check the terminal", "detail": str(e)})
+                except Exception:
+                    pass
+        else:
+            self._send(404, "text/plain", b"not found")
+
+    def do_POST(self):
+        if self.path.startswith("/api/chat"):
+            length = int(self.headers.get("Content-Length", 0))
+            try:
+                payload = json.loads(self.rfile.read(length) or b"{}")
+            except Exception:
+                payload = {}
+            msgs = [{"role": "system", "content": CHAT_SYSTEM}]
+            for m in (payload.get("messages") or [])[-20:]:      # keep context bounded
+                role, content = m.get("role"), str(m.get("content", "")).strip()
+                if role in ("user", "assistant") and content:
+                    msgs.append({"role": role, "content": content})
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            try:
+                got = False
+                for piece in ask_stream(msgs):
+                    got = True
+                    self.wfile.write(piece.encode("utf-8")); self.wfile.flush()
+                if not got:
+                    self.wfile.write(b"(the model returned nothing)"); self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            except Exception as e:
+                try:
+                    self.wfile.write(("⚠ no answer from the model at %s\nStart it with:  "
+                                      "ollama serve   +   ollama pull %s\n(%s)" % (BASE, MODEL, e)).encode())
+                    self.wfile.flush()
                 except Exception:
                     pass
         else:
