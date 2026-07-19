@@ -169,7 +169,12 @@ if ! curl -fsS "$OLLAMA_URL/api/tags" >/dev/null 2>&1; then
 fi
 
 # 4. Model pulled? ----------------------------------------------------------
-if ! ollama list 2>/dev/null | grep -q "${MODEL%%:*}"; then
+# Match the EXACT tag, not just the family: llama3.2:1b is a different model
+# from llama3.2:latest, and matching only "llama3.2" would wrongly skip the
+# pull when a sibling tag is already present (then the API 404s at run time).
+# A bare name (no ":tag") is stored by ollama as ":latest", so normalise that.
+_want="$MODEL"; case "$_want" in *:*) ;; *) _want="$_want:latest" ;; esac
+if ! ollama list 2>/dev/null | awk '{print $1}' | grep -qx "$_want"; then
   printf "\n\033[1;33m┌─ Heads up: downloading the model ────────────────────────────┐\033[0m\n"
   printf "\033[33m│\033[0m  '%s' is a \033[1mbig download\033[0m (~1-2 GB). First run only —\n" "$MODEL"
   printf "\033[33m│\033[0m  it can take a few minutes on a slow connection. Progress below.\n"
