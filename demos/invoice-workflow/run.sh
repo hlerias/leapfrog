@@ -69,25 +69,48 @@ _use_transformers() {
   exit $?
 }
 
+# Download + unpack Ollama into ~/.local, best-effort. Ollama ships the Linux
+# build as .tar.zst now (older builds were .tgz) — try the current format, then
+# fall back to the old one. Returns non-zero on any failure so the caller can
+# switch to transformers instead of aborting. Called from an `if`, so set -e is
+# relaxed inside it and a failed download won't kill the script.
+_install_ollama_linux() {
+  local arch="$1" base="https://ollama.com/download" tmp="/tmp/leapfrog-ollama"
+  mkdir -p "$HOME/.local"
+  if curl -fsSL --max-time 300 "$base/ollama-linux-${arch}.tar.zst" -o "$tmp.tar.zst" 2>/dev/null \
+     && tar --zstd -C "$HOME/.local" -xf "$tmp.tar.zst" 2>/dev/null; then
+    :
+  elif curl -fsSL --max-time 300 "$base/ollama-linux-${arch}.tgz" -o "$tmp.tgz" 2>/dev/null \
+       && tar -C "$HOME/.local" -xzf "$tmp.tgz" 2>/dev/null; then
+    :
+  else
+    return 1
+  fi
+  [ -x "$HOME/.local/bin/ollama" ]
+}
+
 if command -v ollama >/dev/null 2>&1; then
   # already installed — skip the download entirely
   say "Ollama already installed — skipping download"
 elif _ollama_reachable; then
-  say "Ollama not found — installing it into \$HOME/.local (no sudo needed)"
+  say "Ollama not found — trying to install it into \$HOME/.local (no sudo needed)"
   os="$(uname -s)"; arch="$(uname -m)"
   case "$arch" in x86_64|amd64) arch=amd64 ;; aarch64|arm64) arch=arm64 ;; esac
   if [ "$os" = "Linux" ]; then
-    mkdir -p "$HOME/.local"
-    curl -fsSL "https://ollama.com/download/ollama-linux-${arch}.tgz" -o /tmp/leapfrog-ollama.tgz
-    tar -C "$HOME/.local" -xzf /tmp/leapfrog-ollama.tgz
-    export PATH="$HOME/.local/bin:$PATH"
-    echo "    installed to $HOME/.local/bin/ollama"
+    if _install_ollama_linux "$arch"; then
+      export PATH="$HOME/.local/bin:$PATH"
+      echo "    installed to $HOME/.local/bin/ollama"
+    else
+      echo "    Ollama download/unpack failed — using the transformers backend instead." >&2
+      _use_transformers "$@"
+    fi
   elif [ "$os" = "Darwin" ]; then
     if command -v brew >/dev/null 2>&1; then
       brew install ollama
     else
-      echo "On macOS, install Ollama from https://ollama.com/download (or 'brew install ollama'), then re-run." >&2
-      exit 1
+      echo "    macOS without Homebrew — using the transformers backend instead." >&2
+      echo "    (For the faster Ollama path, install it from https://ollama.com/download and re-run.)" >&2
+      _use_transformers "$@"
     fi
   fi
 else
