@@ -8,10 +8,33 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-MODEL="${LLM_MODEL:-llama3.2}"          # override: LLM_MODEL=llama3.2:1b ./run.sh
+# Model is chosen to match the hardware further below (GPU -> 3B, CPU-only ->
+# 1B). Pin one explicitly to skip the auto-pick:  LLM_MODEL=llama3.2 ./run.sh
+GPU_MODEL="llama3.2"        # 3B — a GPU handles it comfortably
+CPU_MODEL="llama3.2:1b"     # CPU-only: ~2-4x faster, same quality for extraction
 OLLAMA_URL="http://localhost:11434"
 
 say() { printf "\n\033[1;36m==>\033[0m %s\n" "$*"; }
+
+# True only for a GPU Ollama can actually use for inference. This box, for
+# example, has an Intel iGPU + an old AMD dGPU but neither is usable — so we
+# deliberately do NOT look at lspci, only at real acceleration stacks.
+_has_usable_gpu() {
+  # NVIDIA / CUDA
+  if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L 2>/dev/null | grep -qi 'GPU'; then
+    return 0
+  fi
+  # Apple Silicon (Metal)
+  if [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ]; then
+    return 0
+  fi
+  # AMD ROCm — only if the ROCm stack is actually installed and sees a GPU
+  if [ -e /dev/kfd ] && command -v rocminfo >/dev/null 2>&1 \
+     && rocminfo 2>/dev/null | grep -q 'Device Type:.*GPU'; then
+    return 0
+  fi
+  return 1
+}
 
 printf "\033[2m%s\033[0m\n" "────────────────────────────────────────────────────────────"
 printf "  \033[1;96mLeapfrog Labs\033[0m \033[2m·\033[0m \033[1mInvoice Workflow\033[0m\n"
@@ -38,6 +61,19 @@ else
 fi
 # ensure demo deps are present without hitting PyPI if already satisfied
 python3 -c "import requests" 2>/dev/null || pip install -r requirements.txt
+
+# 1b. Pick a model that matches the hardware --------------------------------
+say "Checking for a usable GPU"
+if [ -n "${LLM_MODEL:-}" ]; then
+  MODEL="$LLM_MODEL"
+  echo "    using pinned model: $MODEL (LLM_MODEL is set)"
+elif _has_usable_gpu; then
+  MODEL="$GPU_MODEL"
+  echo "    GPU detected — using '$MODEL'"
+else
+  MODEL="$CPU_MODEL"
+  echo "    no usable GPU — using the lighter '$MODEL' (faster on CPU, same quality here)"
+fi
 
 # 2. Pick a backend: Ollama if reachable, Hugging Face transformers otherwise -
 # Both are local and free. Ollama is faster; transformers works where
