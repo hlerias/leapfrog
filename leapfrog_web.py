@@ -9,7 +9,7 @@ Talks to whatever OpenAI-compatible endpoint you point it at - by default
 a local Ollama:  ollama serve  +  ollama pull llama3.2
 """
 
-import json, os, re, sys, threading, time, urllib.request, webbrowser
+import json, os, re, socket, sys, threading, time, urllib.error, urllib.request, webbrowser
 from datetime import date
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -27,11 +27,48 @@ def ask(prompt, timeout=120):
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.load(r)["choices"][0]["message"]["content"]
 
-def model_alive():
+def probe_model():
+    """Check the model endpoint and say precisely what's wrong.
+    Returns (state, detail). state is one of:
+      ok         -> detail is seconds-per-call (float)
+      no_server  -> nothing is listening / host unresolved  (start it)
+      no_model   -> server is up but the model isn't pulled (404)
+      timeout    -> reachable but too slow to answer
+      error      -> anything else (detail carries the message)"""
+    t0 = time.time()
     try:
-        t0 = time.time(); ask("say ok", timeout=20); return True, round(time.time() - t0, 1)
+        ask("say ok", timeout=20)
+        return "ok", round(time.time() - t0, 1)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:                       # Ollama returns 404 for an unpulled model
+            return "no_model", "model %r not found (HTTP 404)" % MODEL
+        return "error", "HTTP %s from %s" % (e.code, BASE)
+    except urllib.error.URLError as e:
+        reason = str(getattr(e, "reason", e)).lower()
+        if any(s in reason for s in ("refused", "not known", "name or service", "no route")):
+            return "no_server", str(getattr(e, "reason", e))
+        if "timed out" in reason or "timeout" in reason:
+            return "timeout", str(getattr(e, "reason", e))
+        return "error", str(getattr(e, "reason", e))
+    except (TimeoutError, socket.timeout) as e:
+        return "timeout", str(e) or "timed out"
     except Exception as e:
-        return False, str(e)
+        return "error", str(e)
+
+def status_hint(state, detail):
+    """A human message + one copy-paste fix for a non-ok state."""
+    if state == "no_server":
+        return "no model server reachable at %s" % BASE, "ollama serve"
+    if state == "no_model":
+        return "the server is up, but '%s' isn't pulled" % MODEL, "ollama pull %s" % MODEL
+    if state == "timeout":
+        return "the model is reachable but slow to answer", "try a smaller model:  ollama pull llama3.2:1b"
+    return "couldn't reach the model (%s)" % detail, "check that a local model is running"
+
+def model_alive():
+    """Back-compat wrapper for the labs: (ok, secs-or-detail)."""
+    state, detail = probe_model()
+    return state == "ok", detail
 
 def first_int(s):
     m = re.search(r"-?\d+", s.replace(",", ""))
@@ -85,10 +122,10 @@ TASKS10 = [
 
 def run_lab10(emit):
     emit("note", {"text": "Six tasks that look equally easy. Each runs %d times." % RUNS})
-    ok, info = model_alive()
-    if not ok:
-        emit("fail", {"text": "No model answering at %s" % BASE,
-                      "fix": "ollama serve   +   ollama pull llama3.2", "detail": str(info)})
+    state, info = probe_model()
+    if state != "ok":
+        msg, fix = status_hint(state, info)
+        emit("fail", {"text": msg, "fix": fix, "detail": str(info)})
         return
     total = len(TASKS10) * RUNS
     emit("note", {"text": "%s is alive (%ss per call). %d calls to go - about %ds."
@@ -137,10 +174,11 @@ TASKS11 = [
 
 def run_lab11(emit):
     emit("note", {"text": "Lab 10's map, turned into a routing rule. Watch the route column."})
-    up, info = model_alive()
+    state, info = probe_model()
+    up = state == "ok"
     if not up:
-        emit("note", {"text": "Model not running - the code-routed rows still answer. "
-                              "For the rest: ollama serve + ollama pull llama3.2"})
+        msg, fix = status_hint(state, info)
+        emit("note", {"text": "%s - the code-routed rows still answer. Fix: %s" % (msg, fix)})
     calls = coded = 0
     for kind, payload in TASKS11:
         if RELIABLE[kind]:
@@ -270,7 +308,7 @@ fetch('/api/status').then(r=>r.json()).then(d=>{
   document.getElementById('pip').className='pip '+(d.ok?'on':'off');
   document.getElementById('stat').textContent=d.ok
     ? d.model+' is running \\u00b7 '+d.secs+'s per call'
-    : 'no model at '+d.base+' \\u2014 run: ollama serve';
+    : (d.message||'no model reachable')+'  \\u2014 run:  '+(d.fix||'ollama serve');
 });
 let busy=false;
 function run(lab){
@@ -376,10 +414,14 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/" or self.path.startswith("/index"):
             self._send(200, "text/html; charset=utf-8", page().encode())
         elif self.path.startswith("/api/status"):
-            ok, info = model_alive()
-            self._send(200, "application/json",
-                       json.dumps({"ok": ok, "model": MODEL, "base": BASE,
-                                   "secs": info if ok else None}).encode())
+            state, info = probe_model()
+            ok = state == "ok"
+            resp = {"ok": ok, "state": state, "model": MODEL, "base": BASE,
+                    "secs": info if ok else None}
+            if not ok:
+                msg, fix = status_hint(state, info)
+                resp.update({"message": msg, "fix": fix, "detail": str(info)})
+            self._send(200, "application/json", json.dumps(resp).encode())
         elif self.path.startswith("/api/run"):
             lab = "10"
             if "lab=" in self.path:
@@ -444,7 +486,22 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send(404, "text/plain", b"not found")
 
+def _preflight():
+    """Probe the model in the background and print a clear, actionable line."""
+    state, detail = probe_model()
+    if state == "ok":
+        print("  \033[38;2;52;224;224m\u2713\033[0m  model %s ready \u00b7 %ss per call\n" % (MODEL, detail))
+    else:
+        msg, fix = status_hint(state, detail)
+        print("  \033[38;2;255;180;80m!\033[0m  %s" % msg)
+        print("     fix:  \033[38;2;52;224;224m%s\033[0m\n" % fix)
+
 def main():
+    if sys.version_info < (3, 7):               # ThreadingHTTPServer + f-strings need 3.7+
+        print("\n  Leapfrog Lab Bench needs Python 3.7+ (you have %d.%d)."
+              % sys.version_info[:2])
+        print("  Try:  python3 leapfrog_web.py\n")
+        raise SystemExit(1)
     try:
         srv = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     except OSError as e:
@@ -455,7 +512,9 @@ def main():
     url = "http://localhost:%d" % PORT
     print("\n  \033[38;2;52;224;224m\u25cf\033[0m  LEAPFROG \u00b7 Lab Bench")
     print("     open %s   (ctrl-c to stop)" % url)
-    print("     model: %s at %s\n" % (MODEL, BASE))
+    print("     model: %s at %s" % (MODEL, BASE))
+    print("     checking your model\u2026\n")
+    threading.Thread(target=_preflight, daemon=True).start()
     if "--no-browser" not in sys.argv:
         threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:
