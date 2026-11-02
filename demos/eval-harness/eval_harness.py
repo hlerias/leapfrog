@@ -29,6 +29,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import sys
 import textwrap
 
@@ -161,6 +162,35 @@ def check_faithful(item, resp):
         if not _has(resp["answer"], fact):
             return False, f"the passage says '{fact}', the answer doesn't"
     return True, "the key facts are in the passage and in the answer"
+
+
+_NUMBER_WORDS = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+                 "ten", "eleven", "twelve"}
+
+
+def key_facts(answer):
+    """The checkable facts an answer states: numbers (digits or words) and
+    names (capitalised words that don't start a sentence, like Lisbon or VP)."""
+    facts = []
+    for sentence in re.split(r"(?<=[.!?;])\s+", answer or ""):
+        words = re.findall(r"[A-Za-z0-9][A-Za-z0-9-]*", sentence)
+        for i, w in enumerate(words):
+            digits = re.match(r"\d+", w)
+            if digits:
+                facts.append(digits.group())
+            elif w.lower() in _NUMBER_WORDS:
+                facts.append(w.lower())
+            elif i > 0 and w[0].isupper():
+                facts.append(w)
+    return list(dict.fromkeys(facts))
+
+
+def check_grounded(resp):
+    """Layer 2 for production traffic, where there is no golden set: the facts
+    come from the answer itself. Every number and name the answer states must
+    be in the passage it used. Reuses check_faithful."""
+    item = {"should_refuse": False, "must_include": key_facts(resp.get("answer"))}
+    return check_faithful(item, resp)
 
 
 def nli_faithful_check():

@@ -82,6 +82,15 @@ def test_layer2_grounded():
     print("OK — layer 2: invented number caught, refusal faithful, off-topic answer not")
 
 
+def test_grounded_without_a_golden_set():
+    v2 = eh.load_responses("v2")
+    assert eh.key_facts("The Q3 offsite is in Lisbon on October 14th.") == ["Q3", "Lisbon", "October", "14"]
+    assert eh.check_grounded(v2["q01"])[0] is True
+    assert eh.check_grounded(v2["q06"])[0] is False                # 50 EUR, passage says 40
+    assert eh.check_grounded(v2["q02"])[0] is False                # invents a twelve-hour rule
+    print("OK — production layer 2: numbers and names must be in the passage (no golden set needed)")
+
+
 def test_layer3_runs_only_after_cheap_layers():
     calls = []
 
@@ -192,6 +201,7 @@ if __name__ == "__main__":
     test_golden_only_real_handbook_files_and_facts()
     test_layer1_programmatic()
     test_layer2_grounded()
+    test_grounded_without_a_golden_set()
     test_layer3_runs_only_after_cheap_layers()
     test_proof_numbers()
     test_gates()
