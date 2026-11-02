@@ -127,6 +127,25 @@ def test_exit_codes():
     print("OK — exit codes: default 1 (BLOCKED), --version v1 0 (SHIP), --calibrate 0")
 
 
+def test_live_without_sentence_transformers_exits_2():
+    saved = sys.modules.get("sentence_transformers", "absent")
+    sys.modules["sentence_transformers"] = None          # make the import fail, installed or not
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            eh.main(["--live"])
+        raise AssertionError("--live without sentence-transformers should exit")
+    except SystemExit as e:
+        assert e.code == 2, e.code
+    finally:
+        if saved == "absent":
+            del sys.modules["sentence_transformers"]
+        else:
+            sys.modules["sentence_transformers"] = saved
+    assert "needs sentence-transformers" in err.getvalue(), err.getvalue()
+    print("OK — --live without sentence-transformers: message on stderr, exit code 2")
+
+
 def test_calibration():
     judge, humans = eh.load_judge("v2"), eh.load_humans()
     assert len(humans) == 18
@@ -177,6 +196,7 @@ if __name__ == "__main__":
     test_proof_numbers()
     test_gates()
     test_exit_codes()
+    test_live_without_sentence_transformers_exits_2()
     test_calibration()
     test_your_turns()
     print("\n" + eh._c("32", "ALL TESTS PASSED"))
