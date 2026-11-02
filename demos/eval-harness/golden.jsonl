@@ -1,0 +1,18 @@
+{"id": "q01", "question": "How far ahead should I book travel?", "expected_source": "travel.txt", "must_include": ["three weeks"], "should_refuse": false}
+{"id": "q02", "question": "What class can I fly on a seven-hour flight?", "expected_source": "travel.txt", "must_include": ["premium economy"], "should_refuse": false}
+{"id": "q03", "question": "Do I need approval before I rent a car?", "expected_source": "travel.txt", "must_include": ["manager approval"], "should_refuse": false}
+{"id": "q04", "question": "I want to book a trip that costs more than 500 EUR. Who has to approve it?", "expected_source": "travel.txt", "must_include": ["VP approval"], "should_refuse": false}
+{"id": "q05", "question": "How long do I have to submit my expenses?", "expected_source": "expenses.txt", "must_include": ["30 days"], "should_refuse": false}
+{"id": "q06", "question": "What's the meal limit when I'm travelling?", "expected_source": "expenses.txt", "must_include": ["40 EUR"], "should_refuse": false}
+{"id": "q07", "question": "Can I expense a bottle of wine?", "expected_source": "expenses.txt", "must_include": ["not reimbursable"], "should_refuse": false}
+{"id": "q08", "question": "Who approves an expense reimbursement over 500 EUR?", "expected_source": "expenses.txt", "must_include": ["manager approval"], "should_refuse": false}
+{"id": "q09", "question": "Where is the next offsite?", "expected_source": "offsites.txt", "must_include": ["Lisbon", "October 14th"], "should_refuse": false}
+{"id": "q10", "question": "Where was the Q2 offsite?", "expected_source": "offsites.txt", "must_include": ["Berlin"], "should_refuse": false}
+{"id": "q11", "question": "Do I have to attend the offsite?", "expected_source": "offsites.txt", "must_include": ["optional"], "should_refuse": false}
+{"id": "q12", "question": "How do I book travel to an offsite?", "expected_source": "offsites.txt", "must_include": ["normal travel tool"], "should_refuse": false}
+{"id": "q13", "question": "What priority is an outage?", "expected_source": "oncall.txt", "must_include": ["P1"], "should_refuse": false}
+{"id": "q14", "question": "When is the on-call rotation handed over?", "expected_source": "oncall.txt", "must_include": ["Monday mornings"], "should_refuse": false}
+{"id": "q15", "question": "Who answers billing questions?", "expected_source": "oncall.txt", "must_include": ["finance"], "should_refuse": false}
+{"id": "q16", "question": "An outage has gone on for half an hour and still isn't fixed. What do I do?", "expected_source": "oncall.txt", "must_include": ["incident commander"], "should_refuse": false}
+{"id": "q17", "question": "What is the company's policy on remote work?", "expected_source": null, "must_include": [], "should_refuse": true}
+{"id": "q18", "question": "How many vacation days do I get each year?", "expected_source": null, "must_include": [], "should_refuse": true}

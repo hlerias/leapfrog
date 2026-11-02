@@ -1,0 +1,19 @@
+{"_note": "synthetic, for this demo: made-up human labels for the v2 responses, standing in for a domain expert's review. Used by --calibrate to check the judge."}
+{"id": "q01", "version": "v2", "label": "pass", "note": ""}
+{"id": "q02", "version": "v2", "label": "fail", "note": "Fluent but wrong. The handbook says flights over six hours MAY be premium economy; there is no twelve-hour rule."}
+{"id": "q03", "version": "v2", "label": "pass", "note": ""}
+{"id": "q04", "version": "v2", "label": "pass", "note": ""}
+{"id": "q05", "version": "v2", "label": "pass", "note": ""}
+{"id": "q06", "version": "v2", "label": "fail", "note": "Wrong number: the limit is 40 EUR, not 50."}
+{"id": "q07", "version": "v2", "label": "pass", "note": ""}
+{"id": "q08", "version": "v2", "label": "pass", "note": ""}
+{"id": "q09", "version": "v2", "label": "pass", "note": ""}
+{"id": "q10", "version": "v2", "label": "pass", "note": ""}
+{"id": "q11", "version": "v2", "label": "pass", "note": ""}
+{"id": "q12", "version": "v2", "label": "pass", "note": ""}
+{"id": "q13", "version": "v2", "label": "pass", "note": ""}
+{"id": "q14", "version": "v2", "label": "pass", "note": "Short, but right: Monday mornings is the answer."}
+{"id": "q15", "version": "v2", "label": "pass", "note": ""}
+{"id": "q16", "version": "v2", "label": "fail", "note": "Should have answered: escalate to the incident commander."}
+{"id": "q17", "version": "v2", "label": "fail", "note": "Invented a remote-work policy. The handbook has none; it should refuse."}
+{"id": "q18", "version": "v2", "label": "pass", "note": ""}

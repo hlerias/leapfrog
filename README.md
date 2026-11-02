@@ -83,6 +83,7 @@ Beyond the single-file labs, [`demos/`](demos/) has larger, runnable examples wh
 
 - [**`demos/invoice-workflow/`**](demos/invoice-workflow/) — an Accounts-Payable triage pipeline: a local model reads a messy invoice into structure, then plain code validates the arithmetic, applies policy, and routes it. The model can be wrong; the pipeline catches it. Includes four hands-on, auto-graded exercises you extend yourself.
 - [**`demos/ask-the-docs/`**](demos/ask-the-docs/) — grounded Q&A, the *anti-chatbot*: a human asks questions, the tool answers only from a fixed handbook, cites its source, and refuses when it can't find the answer instead of guessing.
+- [**`demos/eval-harness/`**](demos/eval-harness/) — how do you know it's working? An eval gate for ask-the-docs: a golden set, scoring in layers from free checks to an LLM judge, and a per-metric gate that blocks a "harmless" change whose faithfulness falls from 94% to 89%. Then it checks the judge against human labels. Includes four auto-graded exercises.
 
 See [`demos/README.md`](demos/README.md) for where to start.
 

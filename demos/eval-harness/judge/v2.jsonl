@@ -1,0 +1,19 @@
+{"_note": "synthetic, for this demo: recorded verdicts of an LLM judge scoring each response against rubric.md. Recorded for every case so --calibrate can compare all of them; the harness itself only asks the judge about cases that passed layers 1 and 2."}
+{"id": "q01", "version": "v2", "verdict": "pass", "reason": "Correct and supported by the passage; cited."}
+{"id": "q02", "version": "v2", "verdict": "pass", "reason": "Clear, confident answer that mentions premium economy; cited to travel.txt."}
+{"id": "q03", "version": "v2", "verdict": "pass", "reason": "Correct; matches the passage."}
+{"id": "q04", "version": "v2", "verdict": "pass", "reason": "Correct; VP approval is in the passage."}
+{"id": "q05", "version": "v2", "verdict": "pass", "reason": "Correct; 30 days is in the passage."}
+{"id": "q06", "version": "v2", "verdict": "fail", "reason": "The passage says 40 EUR, the answer says 50 EUR."}
+{"id": "q07", "version": "v2", "verdict": "pass", "reason": "Correct; wine is alcohol and alcohol is not reimbursable."}
+{"id": "q08", "version": "v2", "verdict": "pass", "reason": "Correct; matches the expenses passage."}
+{"id": "q09", "version": "v2", "verdict": "pass", "reason": "Correct; Lisbon on October 14th."}
+{"id": "q10", "version": "v2", "verdict": "pass", "reason": "Correct; Berlin."}
+{"id": "q11", "version": "v2", "verdict": "pass", "reason": "Correct; optional but encouraged."}
+{"id": "q12", "version": "v2", "verdict": "pass", "reason": "Correct; the normal travel tool."}
+{"id": "q13", "version": "v2", "verdict": "pass", "reason": "Correct; P1."}
+{"id": "q14", "version": "v2", "verdict": "fail", "reason": "Too short: a bare time with no context does not fully answer the question."}
+{"id": "q15", "version": "v2", "verdict": "pass", "reason": "Correct; finance."}
+{"id": "q16", "version": "v2", "verdict": "fail", "reason": "Refused, but a retrieved passage (incident commander) answers the question."}
+{"id": "q17", "version": "v2", "verdict": "fail", "reason": "The passage is about rental cars, not remote work; the answer is invented."}
+{"id": "q18", "version": "v2", "verdict": "pass", "reason": "Correct refusal: no passage covers vacation days."}
