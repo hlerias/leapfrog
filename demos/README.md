@@ -10,6 +10,7 @@ validation, containment — come together into something you'd actually ship.
 | [`invoice-workflow/`](invoice-workflow/) | An Accounts-Payable triage pipeline: a **local model** reads a messy invoice into structure, then plain code validates the arithmetic, applies policy, and routes it. The model can be wrong; the pipeline catches it. Includes four hands-on, auto-graded exercises. | no (local model or `--offline`) |
 | [`ask-the-docs/`](ask-the-docs/) | **Grounded Q&A — the anti-chatbot.** A human asks questions; the tool answers only from a fixed handbook, cites the source, and refuses when it can't find the answer instead of guessing. Extends the RAG labs. | no (retrieval-only; `--model` optional) |
 | [`eval-harness/`](eval-harness/) | **How do you know it's working?** A pre-deployment eval gate for ask-the-docs: a golden set, scoring in layers (free checks first, an LLM judge last), the four signals from Chapter 7, and a per-metric gate that blocks a change the average would have shipped. Then it checks the judge against human labels. Includes four auto-graded exercises. | no (recorded responses; `--live` / `--judge` optional) |
+| [`quality-monitor/`](quality-monitor/) | **Alert on quality, not latency.** A synthetic week of ask-the-docs traces: the dashboard stays green while travel answers quietly go wrong. Scores sampled traffic with the eval harness's checks, alerts per segment, finds the cause by elimination (the index, not the model), and adds a runtime guardrail. Includes two auto-graded exercises. | no (synthetic traces) |
 
 ## Which to start with
 
@@ -24,5 +25,9 @@ validation, containment — come together into something you'd actually ship.
   [`eval-harness/`](eval-harness/) — run `python3 eval_harness.py` to watch a
   "harmless" change get BLOCKED on one metric, then `--calibrate` to check the
   judge. No install at all.
+- **Want to know when it breaks after you ship?**
+  [`quality-monitor/`](quality-monitor/) — run `python3 quality_monitor.py --guard`
+  to watch a green dashboard miss a week of wrong travel answers, and the
+  per-segment alert catch them on day 4.
 
-All three run on a locked-down corporate machine (no admin, no API key) — that's the point.
+All four run on a locked-down corporate machine (no admin, no API key) — that's the point.

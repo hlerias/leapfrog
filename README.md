@@ -79,11 +79,12 @@ Each lab is short, commented, and independent. Start with `08_trace.py` or `03_e
 
 ## Demos — putting it all together
 
-Beyond the single-file labs, [`demos/`](demos/) has larger, runnable examples where the pieces come together into something you'd actually ship. Both run locally with no API key on the default path — even on a locked-down corporate machine.
+Beyond the single-file labs, [`demos/`](demos/) has larger, runnable examples where the pieces come together into something you'd actually ship. All of them run locally with no API key on the default path — even on a locked-down corporate machine.
 
 - [**`demos/invoice-workflow/`**](demos/invoice-workflow/) — an Accounts-Payable triage pipeline: a local model reads a messy invoice into structure, then plain code validates the arithmetic, applies policy, and routes it. The model can be wrong; the pipeline catches it. Includes four hands-on, auto-graded exercises you extend yourself.
 - [**`demos/ask-the-docs/`**](demos/ask-the-docs/) — grounded Q&A, the *anti-chatbot*: a human asks questions, the tool answers only from a fixed handbook, cites its source, and refuses when it can't find the answer instead of guessing.
 - [**`demos/eval-harness/`**](demos/eval-harness/) — how do you know it's working? An eval gate for ask-the-docs: a golden set, scoring in layers from free checks to an LLM judge, and a per-metric gate that blocks a "harmless" change whose faithfulness falls from 94% to 89%. Then it checks the judge against human labels. Includes four auto-graded exercises.
+- [**`demos/quality-monitor/`**](demos/quality-monitor/) — alert on quality, not latency: a synthetic week of traces where the dashboard stays green while travel answers quietly go wrong. Per-segment alerts catch it on day 4, root cause by elimination points at the index, not the model, and a runtime guardrail turns the bad answers into honest refusals. Includes two auto-graded exercises.
 
 See [`demos/README.md`](demos/README.md) for where to start.
 
