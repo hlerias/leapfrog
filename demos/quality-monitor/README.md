@@ -21,6 +21,10 @@ It covers the other two of Chapter 9's three places evaluation lives.
 **production monitoring** (watch it after you ship) and a **runtime
 guardrail** (stop the worst of it in the moment).
 
+![The dashboard stays green while travel faithfulness drops from day 4; the alert fires on travel and the root cause is the index, not the model](demo.gif)
+
+*Recorded from real runs with [`record_gif.py`](record_gif.py).*
+
 ## Run it
 
 No install, no network, no API key:
@@ -124,6 +128,7 @@ Stuck? [`solutions/`](solutions/), but try first.
 | `test_monitor.py` | Tests: data, scoring, alerts, root cause, guardrail, exercises |
 | `your_turn_1.py`, `your_turn_2.py` | Auto-graded exercises |
 | `solutions/README.md` | Solutions and the why (try first) |
+| `demo.gif`, `record_gif.py` | The recording above, and the script that re-records it from real runs (needs Pillow) |
 
 The scorers live in [`../eval-harness/eval_harness.py`](../eval-harness/eval_harness.py)
 (`check_citation`, `check_grounded`).
