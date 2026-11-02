@@ -23,6 +23,7 @@
 #       python demos/eval-harness/eval_harness.py --calibrate  (check the judge)
 #
 # Exit code: 0 = SHIP, 1 = BLOCKED, so it works as a CI check.
+#            2 = could not run (e.g. --live without sentence-transformers).
 
 import argparse
 import glob
@@ -55,6 +56,8 @@ TOLERANCE = float(os.environ.get("EVAL_TOLERANCE", "0.02"))  # max drop vs basel
 # The one thing that differs between the two versions: ask.py's refusal
 # threshold (ASK_THRESHOLD). v2 lowers it so that more questions get answered.
 VERSIONS = {"v1": 0.0, "v2": -2.0}
+
+EXIT_CANNOT_RUN = 2   # distinct from 1 (BLOCKED), so CI can tell "bad change" from "broken setup"
 
 # Optional judge model — same env vars as every other Leapfrog lab.
 BASE_URL = os.environ.get("LLM_BASE_URL", "http://localhost:11434/v1")
@@ -316,9 +319,10 @@ def run_live(golden, version):
     try:
         import sentence_transformers  # noqa: F401
     except ImportError:
-        raise SystemExit("--live runs the real ask-the-docs retrieval and needs sentence-transformers:\n"
-                         "  ./setup.sh --live     (or: pip install -r ../ask-the-docs/requirements.txt)\n"
-                         "Without --live the harness uses the recorded responses.")
+        print("--live runs the real ask-the-docs retrieval and needs sentence-transformers:\n"
+              "  ./setup.sh --live     (or: pip install -r ../ask-the-docs/requirements.txt)\n"
+              "Without --live the harness uses the recorded responses.", file=sys.stderr)
+        raise SystemExit(EXIT_CANNOT_RUN)
     import ask
     retrieve = ask._retriever(ask.load_chunks())
     phrase = ask.phrase_with_model if os.environ.get("LLM_API_KEY") else None

@@ -25,4 +25,4 @@ validation, containment — come together into something you'd actually ship.
   "harmless" change get BLOCKED on one metric, then `--calibrate` to check the
   judge. No install at all.
 
-Both run on a locked-down corporate machine (no admin, no API key) — that's the point.
+All three run on a locked-down corporate machine (no admin, no API key) — that's the point.

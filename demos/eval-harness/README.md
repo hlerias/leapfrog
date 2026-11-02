@@ -40,7 +40,8 @@ python3 test_harness.py                 # the tests → ALL TESTS PASSED
 Or `./setup.sh`, which runs the tests and then the harness.
 
 The exit code is `0` for SHIP and `1` for BLOCKED, so the harness works as a
-CI check as it stands.
+CI check as it stands. It is `2` when the harness can't run at all, for
+example `--live` without `sentence-transformers` installed.
 
 ## What it does, step by step
 
@@ -133,6 +134,9 @@ this demo**: made up to show the harness, not recorded from a real run. The
 golden questions are real, though. Every fact they check is in
 [`../ask-the-docs/handbook/`](../ask-the-docs/handbook/), and a test makes
 sure of it. The harness reads the handbook in place; it never copies it.
+q04 and q08 both mention 500 EUR but test two different rules on purpose:
+booking a trip over 500 EUR needs VP approval (`travel.txt`), while a
+reimbursement over 500 EUR needs manager approval (`expenses.txt`).
 
 ## Optional: run it for real
 
