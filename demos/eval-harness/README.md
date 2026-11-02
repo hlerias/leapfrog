@@ -20,6 +20,10 @@ It covers the first of Chapter 9's three places evaluation lives: the
 **pre-deployment gate**, which catches a regression before a single user
 meets it.
 
+![The eval harness blocks v2 on faithfulness 94% → 89%, then checks the judge against human labels](demo.gif)
+
+*Recorded from real runs with [`record_gif.py`](record_gif.py).*
+
 ## Run it
 
 No install, no network, no API key. A fresh `python3` is enough:
@@ -170,6 +174,7 @@ python eval_harness.py --nli         # adds an entailment model to layer 2
 | `your_turn_1.py` … `your_turn_4.py` | Auto-graded exercises |
 | `solutions/README.md` | Solutions and the why (try first) |
 | `setup.sh` | Runs the tests and the harness; `--live` installs the optional extras |
+| `demo.gif`, `record_gif.py` | The recording above, and the script that re-records it from real runs (needs Pillow) |
 
 ## Tuning
 

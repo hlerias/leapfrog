@@ -9,6 +9,7 @@ validation, containment — come together into something you'd actually ship.
 |------|------------|--------------|
 | [`invoice-workflow/`](invoice-workflow/) | An Accounts-Payable triage pipeline: a **local model** reads a messy invoice into structure, then plain code validates the arithmetic, applies policy, and routes it. The model can be wrong; the pipeline catches it. Includes four hands-on, auto-graded exercises. | no (local model or `--offline`) |
 | [`ask-the-docs/`](ask-the-docs/) | **Grounded Q&A — the anti-chatbot.** A human asks questions; the tool answers only from a fixed handbook, cites the source, and refuses when it can't find the answer instead of guessing. Extends the RAG labs. | no (retrieval-only; `--model` optional) |
+| [`eval-harness/`](eval-harness/) | **How do you know it's working?** A pre-deployment eval gate for ask-the-docs: a golden set, scoring in layers (free checks first, an LLM judge last), the four signals from Chapter 7, and a per-metric gate that blocks a change the average would have shipped. Then it checks the judge against human labels. Includes four auto-graded exercises. | no (recorded responses; `--live` / `--judge` optional) |
 
 ## Which to start with
 
@@ -19,5 +20,9 @@ validation, containment — come together into something you'd actually ship.
 - **Curious about human-in-the-loop without a chatbot?**
   [`ask-the-docs/`](ask-the-docs/) — run `python ask.py --demo` to see it answer
   from the handbook and *refuse* the one question that isn't in it.
+- **Want to know if a change made it better or worse?**
+  [`eval-harness/`](eval-harness/) — run `python3 eval_harness.py` to watch a
+  "harmless" change get BLOCKED on one metric, then `--calibrate` to check the
+  judge. No install at all.
 
 Both run on a locked-down corporate machine (no admin, no API key) — that's the point.
